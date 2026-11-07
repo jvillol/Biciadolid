@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Biciadolid - Rutas en Patinete y Bici por Valladolid</title>
+  <title>Biciadolid - Mapa GIS de Rutas en Patinete y Bici en Valladolid</title>
 
   <!-- Leaflet CSS desde CDN -->
   <link
@@ -21,13 +21,19 @@
       --red-danger: #e74c3c;
       --orange-other: #f39c12;
       --cyan-cycleway: #00d2ff;
-      --bg-card: rgba(15, 23, 42, 0.92);
-      --bg-input: rgba(30, 41, 59, 0.9);
+      --gisava-excl2: #00a884;
+      --gisava-excl1: #ef4444;
+      --gisava-comp2: #ffaa00;
+      --gisava-comp1: #005ce6;
+      --gisava-ciclo: #c500ff;
+      --gisava-alfoz: #267300;
+      --bg-card: rgba(15, 23, 42, 0.94);
+      --bg-input: rgba(30, 41, 59, 0.92);
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --border-color: rgba(148, 163, 184, 0.22);
       --radius: 16px;
-      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.45);
+      --shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.5);
     }
 
     * {
@@ -56,12 +62,12 @@
     /* Notificaciones / Alertas en pantalla */
     #toast-container {
       position: fixed;
-      top: 14px;
+      top: 12px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 2000;
+      z-index: 2500;
       width: calc(100% - 24px);
-      max-width: 440px;
+      max-width: 460px;
       pointer-events: none;
       display: flex;
       flex-direction: column;
@@ -70,9 +76,9 @@
 
     .toast {
       pointer-events: auto;
-      padding: 12px 14px;
+      padding: 11px 14px;
       border-radius: 12px;
-      font-size: 0.85rem;
+      font-size: 0.83rem;
       font-weight: 500;
       line-height: 1.35;
       display: flex;
@@ -81,23 +87,23 @@
       gap: 10px;
       box-shadow: var(--shadow);
       backdrop-filter: blur(10px);
-      animation: slideDown 0.25s ease-out;
+      animation: slideDown 0.22s ease-out;
     }
 
     .toast.error {
-      background: rgba(220, 38, 38, 0.95);
+      background: rgba(220, 38, 38, 0.96);
       color: #fff;
       border: 1px solid rgba(254, 202, 202, 0.35);
     }
 
     .toast.info {
-      background: rgba(14, 165, 233, 0.95);
+      background: rgba(14, 165, 233, 0.96);
       color: #fff;
       border: 1px solid rgba(186, 230, 253, 0.35);
     }
 
     .toast.success {
-      background: rgba(22, 163, 74, 0.95);
+      background: rgba(22, 163, 74, 0.96);
       color: #fff;
       border: 1px solid rgba(187, 247, 208, 0.35);
     }
@@ -113,7 +119,7 @@
     }
 
     @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-12px); }
+      from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
@@ -123,10 +129,10 @@
       top: 10px;
       left: 10px;
       right: 10px;
-      max-width: 460px;
+      max-width: 480px;
       margin: 0 auto;
       background: var(--bg-card);
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(14px);
       border: 1px solid var(--border-color);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
@@ -139,7 +145,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 11px 14px;
+      padding: 10px 14px;
       cursor: pointer;
       user-select: none;
       border-bottom: 1px solid var(--border-color);
@@ -167,12 +173,13 @@
     }
 
     .brand-subtitle {
-      font-size: 0.72rem;
-      color: var(--primary);
+      font-size: 0.7rem;
+      color: #38bdf8;
       font-weight: 600;
-      background: rgba(14, 165, 233, 0.15);
+      background: rgba(14, 165, 233, 0.16);
       padding: 2px 7px;
       border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.25);
     }
 
     .collapse-btn {
@@ -181,7 +188,7 @@
       color: var(--text-main);
       border-radius: 8px;
       padding: 5px 10px;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       font-weight: 600;
       cursor: pointer;
       display: flex;
@@ -189,12 +196,45 @@
       gap: 4px;
     }
 
-    .panel-body {
-      padding: 12px 14px;
+    /* Pestañas de navegación en el panel superior */
+    .tabs-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      background: rgba(15, 23, 42, 0.6);
+      border-bottom: 1px solid var(--border-color);
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .top-panel.collapsed .tabs-bar {
+      display: none;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 7px 6px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
       display: flex;
-      flex-direction: column;
-      gap: 9px;
-      max-height: 68vh;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .tab-btn.active {
+      background: rgba(14, 165, 233, 0.2);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+
+    .panel-body {
+      padding: 11px 13px;
+      max-height: 62vh;
       overflow-y: auto;
     }
 
@@ -202,20 +242,30 @@
       display: none;
     }
 
+    .tab-pane {
+      display: none;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .tab-pane.active {
+      display: flex;
+    }
+
     /* Aviso / Input de API Key ORS */
     .api-key-box {
       background: rgba(245, 158, 11, 0.14);
       border: 1px solid rgba(245, 158, 11, 0.45);
       border-radius: 10px;
-      padding: 8px 10px;
-      font-size: 0.76rem;
+      padding: 7px 10px;
+      font-size: 0.74rem;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
     }
 
     .api-key-box.configured {
-      background: rgba(46, 204, 113, 0.12);
+      background: rgba(46, 204, 113, 0.11);
       border-color: rgba(46, 204, 113, 0.35);
     }
 
@@ -241,20 +291,21 @@
       background: var(--bg-input);
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      padding: 6px 9px;
+      padding: 5px 8px;
       color: var(--text-main);
-      font-size: 0.78rem;
+      font-size: 0.76rem;
     }
 
-    /* Inputs de Origen y Destino */
+    /* Inputs de Origen y Destino + Sugerencias GISAVA */
     .input-group {
       display: flex;
       flex-direction: column;
       gap: 4px;
+      position: relative;
     }
 
     .input-label {
-      font-size: 0.73rem;
+      font-size: 0.72rem;
       color: var(--text-muted);
       font-weight: 600;
       display: flex;
@@ -264,18 +315,19 @@
 
     .input-row {
       display: flex;
-      gap: 6px;
+      gap: 5px;
       align-items: stretch;
     }
 
     .text-input {
       flex: 1;
+      min-width: 0;
       background: var(--bg-input);
       border: 1px solid var(--border-color);
       border-radius: 10px;
-      padding: 9px 11px;
+      padding: 8px 10px;
       color: var(--text-main);
-      font-size: 0.85rem;
+      font-size: 0.83rem;
       outline: none;
       transition: border-color 0.2s;
     }
@@ -284,17 +336,66 @@
       border-color: var(--primary);
     }
 
+    .suggestions-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      margin-top: 3px;
+      background: #0f172a;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.65);
+      z-index: 1500;
+      max-height: 170px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .suggestions-list.visible {
+      display: block;
+    }
+
+    .suggestion-item {
+      padding: 8px 10px;
+      font-size: 0.78rem;
+      color: var(--text-main);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .suggestion-item:last-child {
+      border-bottom: none;
+    }
+
+    .suggestion-item:hover, .suggestion-item:active {
+      background: rgba(14, 165, 233, 0.2);
+    }
+
+    .suggestion-badge {
+      font-size: 0.65rem;
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: rgba(148, 163, 184, 0.18);
+      color: #cbd5e1;
+      white-space: nowrap;
+    }
+
     .btn {
       border: none;
       border-radius: 10px;
-      padding: 8px 11px;
-      font-size: 0.8rem;
+      padding: 7px 10px;
+      font-size: 0.78rem;
       font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
+      gap: 4px;
       transition: transform 0.1s, opacity 0.2s, background 0.2s;
       white-space: nowrap;
     }
@@ -318,8 +419,7 @@
       background: rgba(148, 163, 184, 0.14);
       color: var(--text-main);
       border: 1px solid var(--border-color);
-      padding: 8px 9px;
-      title: "Seleccionar en el mapa";
+      padding: 7px 9px;
     }
 
     .btn-pick.active {
@@ -330,46 +430,65 @@
 
     .actions-row {
       display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
+      grid-template-columns: 1fr auto auto;
+      gap: 6px;
       margin-top: 2px;
     }
 
     .btn-primary {
       background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: #fff;
-      padding: 10px 14px;
-      font-size: 0.88rem;
+      padding: 10px 12px;
+      font-size: 0.85rem;
       box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
+    }
+
+    .btn-swap {
+      background: rgba(148, 163, 184, 0.15);
+      color: #e2e8f0;
+      border: 1px solid var(--border-color);
+      padding: 10px;
     }
 
     .btn-clear {
       background: rgba(239, 68, 68, 0.16);
       color: #fca5a5;
       border: 1px solid rgba(239, 68, 68, 0.3);
-      padding: 10px 12px;
+      padding: 10px 11px;
     }
 
-    /* Interruptor Overpass Carriles Bici */
-    .cycleway-toggle-bar {
+    /* Interruptores de Capas GIS */
+    .layer-card {
+      background: rgba(30, 41, 59, 0.65);
+      border: 1px solid var(--border-color);
+      border-radius: 11px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .layer-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(0, 210, 255, 0.09);
-      border: 1px solid rgba(0, 210, 255, 0.28);
-      border-radius: 10px;
-      padding: 8px 11px;
-      margin-top: 2px;
+      gap: 8px;
     }
 
-    .cycleway-toggle-label {
+    .layer-info {
       display: flex;
       align-items: center;
-      gap: 7px;
-      font-size: 0.8rem;
+      gap: 8px;
+      font-size: 0.79rem;
       font-weight: 600;
-      color: #e0f2fe;
+      color: #f1f5f9;
       cursor: pointer;
+    }
+
+    .layer-sub {
+      font-size: 0.69rem;
+      color: var(--text-muted);
+      font-weight: 400;
     }
 
     .cyan-line-sample {
@@ -378,14 +497,46 @@
       background: var(--cyan-cycleway);
       border-radius: 2px;
       box-shadow: 0 0 6px var(--cyan-cycleway);
+      flex-shrink: 0;
+    }
+
+    /* Sub-leyenda oficial GISAVA / Plano A0 */
+    .gisava-sublegend {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 4px 8px;
+      padding-top: 6px;
+      border-top: 1px dashed rgba(148, 163, 184, 0.2);
+      font-size: 0.69rem;
+      color: #cbd5e1;
+    }
+
+    .sublegend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .swatch-line {
+      width: 16px;
+      height: 3.5px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .swatch-dashed {
+      width: 16px;
+      height: 0;
+      border-top: 3px dashed;
+      flex-shrink: 0;
     }
 
     /* Switch estilizado */
     .switch {
       position: relative;
       display: inline-block;
-      width: 42px;
-      height: 24px;
+      width: 40px;
+      height: 22px;
       flex-shrink: 0;
     }
 
@@ -400,39 +551,162 @@
       cursor: pointer;
       inset: 0;
       background-color: rgba(148, 163, 184, 0.3);
-      transition: 0.25s;
+      transition: 0.22s;
       border-radius: 999px;
     }
 
     .slider:before {
       position: absolute;
       content: "";
-      height: 18px;
-      width: 18px;
+      height: 16px;
+      width: 16px;
       left: 3px;
       bottom: 3px;
       background-color: white;
-      transition: 0.25s;
+      transition: 0.22s;
       border-radius: 50%;
     }
 
     input:checked + .slider {
-      background-color: var(--cyan-cycleway);
+      background-color: var(--primary);
     }
 
     input:checked + .slider:before {
       transform: translateX(18px);
     }
 
+    /* Selector de Mapa Base */
+    .basemap-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+    }
+
+    .basemap-btn {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      border-radius: 8px;
+      padding: 6px 4px;
+      font-size: 0.71rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .basemap-btn.active {
+      background: rgba(14, 165, 233, 0.22);
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.5);
+    }
+
+    /* Catálogo de Rutas GEOCyL y Plano Ayuntamiento */
+    .routes-section-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #38bdf8;
+      margin-top: 2px;
+    }
+
+    .route-preset-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .route-preset-card {
+      background: rgba(30, 41, 59, 0.72);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .route-preset-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .route-preset-name {
+      font-size: 0.79rem;
+      font-weight: 600;
+      color: #f8fafc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .route-preset-meta {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    .route-preset-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .btn-mini {
+      padding: 5px 8px;
+      font-size: 0.72rem;
+      border-radius: 7px;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      background: rgba(14, 165, 233, 0.18);
+      color: #38bdf8;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn-mini.green {
+      border-color: rgba(46, 204, 113, 0.4);
+      background: rgba(46, 204, 113, 0.18);
+      color: #4ade80;
+    }
+
+    /* Enlaces Oficiales PDF / GISAVA / GEOCyL */
+    .official-links-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .official-link-card {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 9px;
+      background: rgba(14, 165, 233, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 10px;
+      color: #e0f2fe;
+      text-decoration: none;
+      font-size: 0.73rem;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .official-link-card:hover {
+      background: rgba(14, 165, 233, 0.2);
+    }
+
     /* Indicador de modo toque en mapa */
     .map-pick-banner {
       display: none;
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       color: #bae6fd;
       background: rgba(2, 132, 199, 0.28);
       border: 1px dashed rgba(56, 189, 248, 0.5);
       border-radius: 8px;
-      padding: 6px 9px;
+      padding: 5px 8px;
       text-align: center;
     }
 
@@ -446,18 +720,18 @@
       bottom: 10px;
       left: 10px;
       right: 10px;
-      max-width: 460px;
+      max-width: 480px;
       margin: 0 auto;
       background: var(--bg-card);
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(14px);
       border: 1px solid var(--border-color);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding: 12px 14px;
+      padding: 11px 14px;
       z-index: 1000;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 9px;
     }
 
     .summary-content {
@@ -482,20 +756,20 @@
       background: rgba(30, 41, 59, 0.75);
       border: 1px solid var(--border-color);
       border-radius: 10px;
-      padding: 7px 10px;
+      padding: 6px 10px;
       display: flex;
       flex-direction: column;
     }
 
     .metric-label {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.03em;
     }
 
     .metric-value {
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       font-weight: 700;
       color: #fff;
       margin-top: 1px;
@@ -505,31 +779,23 @@
     .safety-breakdown {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
     }
 
     .safety-labels {
       display: flex;
       justify-content: space-between;
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       font-weight: 600;
     }
 
-    .pct-safe {
-      color: var(--green-safe);
-    }
-
-    .pct-danger {
-      color: var(--red-danger);
-    }
-
-    .pct-other {
-      color: var(--orange-other);
-    }
+    .pct-safe { color: var(--green-safe); }
+    .pct-danger { color: var(--red-danger); }
+    .pct-other { color: var(--orange-other); }
 
     .progress-bar {
       width: 100%;
-      height: 9px;
+      height: 8px;
       background: rgba(255, 255, 255, 0.1);
       border-radius: 999px;
       overflow: hidden;
@@ -551,8 +817,8 @@
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      font-size: 0.74rem;
+      gap: 6px;
+      font-size: 0.72rem;
       color: var(--text-muted);
     }
 
@@ -565,7 +831,7 @@
     }
 
     .legend-swatch {
-      width: 14px;
+      width: 13px;
       height: 5px;
       border-radius: 3px;
     }
@@ -578,24 +844,57 @@
       width: 30px;
       height: 30px;
       border-radius: 50%;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: bold;
       color: #fff;
       box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
       border: 2px solid #fff;
     }
 
-    .marker-origin {
-      background: #0ea5e9;
+    .marker-origin { background: #0ea5e9; }
+    .marker-dest { background: #ef4444; }
+
+    .poi-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #fff;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
     }
 
-    .marker-dest {
-      background: #ef4444;
+    .poi-biki { background: #e11d48; }
+    .poi-parkibici { background: #059669; }
+    .poi-aparcabicis { background: #2563eb; width: 20px; height: 20px; font-size: 0.65rem; }
+
+    .popup-btn-group {
+      display: flex;
+      gap: 5px;
+      margin-top: 7px;
     }
+
+    .popup-btn {
+      flex: 1;
+      padding: 4px 7px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #fff;
+    }
+
+    .popup-btn.origin { background: #0ea5e9; }
+    .popup-btn.dest { background: #ef4444; }
 
     /* Mover controles de zoom de Leaflet para no solapar en móvil */
     .leaflet-bottom.leaflet-right {
-      bottom: 135px !important;
+      bottom: 130px !important;
     }
   </style>
 </head>
@@ -610,7 +909,7 @@
       <div class="brand">
         <span class="brand-icon">🛴</span>
         <span class="brand-title">Biciadolid</span>
-        <span class="brand-subtitle">VMP &amp; Bici GIS</span>
+        <span class="brand-subtitle">GISAVA + GEOCyL + ORS</span>
       </div>
       <button type="button" class="collapse-btn" id="togglePanelBtn" aria-label="Plegar o desplegar controles">
         <span id="togglePanelText">Ocultar</span>
@@ -618,90 +917,246 @@
       </button>
     </header>
 
+    <!-- Barra de Pestañas -->
+    <nav class="tabs-bar">
+      <button type="button" class="tab-btn active" data-tab="tabRoute">⚡ Ruta Segura</button>
+      <button type="button" class="tab-btn" data-tab="tabLayers">🗺️ Capas GIS</button>
+      <button type="button" class="tab-btn" data-tab="tabRoutes">🌲 Rutas y Planos</button>
+    </nav>
+
     <div class="panel-body">
-      <!-- Configuración rápida de API Key de OpenRouteService -->
-      <div class="api-key-box" id="apiKeyBox">
-        <div class="api-key-header">
-          <span id="apiKeyStatusText">⚠️ Falta configurar ORS_API_KEY</span>
-          <a href="https://openrouteservice.org/dev/#/signup" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">Obtener gratis</a>
+      <!-- PESTAÑA 1: CALCULADOR DE RUTA -->
+      <div class="tab-pane active" id="tabRoute">
+        <!-- Configuración rápida de API Key de OpenRouteService -->
+        <div class="api-key-box" id="apiKeyBox">
+          <div class="api-key-header">
+            <span id="apiKeyStatusText">⚠️ Falta configurar ORS_API_KEY</span>
+            <a href="https://openrouteservice.org/dev/#/signup" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">Obtener gratis</a>
+          </div>
+          <div class="api-key-row">
+            <input
+              type="password"
+              id="orsApiKeyInput"
+              placeholder="Pega tu API Key de OpenRouteService..."
+              autocomplete="off"
+            />
+            <button type="button" class="btn btn-gps" id="saveApiKeyBtn">Guardar</button>
+          </div>
         </div>
-        <div class="api-key-row">
-          <input
-            type="password"
-            id="orsApiKeyInput"
-            placeholder="Pega tu API Key de OpenRouteService..."
-            autocomplete="off"
-          />
-          <button type="button" class="btn btn-gps" id="saveApiKeyBtn">Guardar</button>
-        </div>
-      </div>
 
-      <!-- Selección de Origen -->
-      <div class="input-group">
-        <div class="input-label">
-          <span>🟢 Punto de Origen</span>
-          <span id="originCoordsLabel"></span>
+        <!-- Selección de Origen -->
+        <div class="input-group">
+          <div class="input-label">
+            <span>🟢 Punto de Origen (Calle, Barrio o BIKI)</span>
+            <span id="originCoordsLabel"></span>
+          </div>
+          <div class="input-row">
+            <input
+              type="text"
+              id="originInput"
+              class="text-input"
+              placeholder="Ej: Plaza Mayor, Parquesol, Calle Santiago..."
+              autocomplete="off"
+            />
+            <button type="button" class="btn btn-gps" id="gpsBtn" title="Obtener ubicación actual">
+              📍 Usar mi GPS
+            </button>
+            <button type="button" class="btn btn-pick" id="pickOriginBtn" title="Tocar en el mapa para elegir Origen">
+              🎯
+            </button>
+          </div>
+          <div class="suggestions-list" id="originSuggestions"></div>
         </div>
-        <div class="input-row">
-          <input
-            type="text"
-            id="originInput"
-            class="text-input"
-            placeholder="Ej: Plaza Mayor, Calle Santiago..."
-          />
-          <button type="button" class="btn btn-gps" id="gpsBtn" title="Obtener ubicación actual">
-            📍 Usar mi GPS
+
+        <!-- Selección de Destino -->
+        <div class="input-group">
+          <div class="input-label">
+            <span>🔴 Punto de Destino (Calle, Barrio o Lugar)</span>
+            <span id="destCoordsLabel"></span>
+          </div>
+          <div class="input-row">
+            <input
+              type="text"
+              id="destInput"
+              class="text-input"
+              placeholder="Ej: Paseo de Zorrilla, Campus Delibes..."
+              autocomplete="off"
+            />
+            <button type="button" class="btn btn-pick" id="pickDestBtn" title="Tocar en el mapa para elegir Destino">
+              🎯
+            </button>
+          </div>
+          <div class="suggestions-list" id="destSuggestions"></div>
+        </div>
+
+        <!-- Banner informativo para selección en el mapa -->
+        <div class="map-pick-banner" id="mapPickBanner">
+          👆 Toca cualquier punto del mapa para fijar el <strong id="mapPickModeName">Origen (A)</strong>
+        </div>
+
+        <!-- Botones de Cálculo, Inversión y Limpieza -->
+        <div class="actions-row">
+          <button type="button" class="btn btn-primary" id="calcRouteBtn">
+            ⚡ Calcular ruta segura
           </button>
-          <button type="button" class="btn btn-pick" id="pickOriginBtn" title="Tocar en el mapa para elegir Origen">
-            🎯
+          <button type="button" class="btn btn-swap" id="swapPointsBtn" title="Invertir Origen y Destino">
+            ⇅
+          </button>
+          <button type="button" class="btn btn-clear" id="clearRouteBtn" title="Limpiar ruta y marcadores">
+            🗑️
           </button>
         </div>
-      </div>
 
-      <!-- Selección de Destino -->
-      <div class="input-group">
-        <div class="input-label">
-          <span>🔴 Punto de Destino</span>
-          <span id="destCoordsLabel"></span>
-        </div>
-        <div class="input-row">
-          <input
-            type="text"
-            id="destInput"
-            class="text-input"
-            placeholder="Ej: Paseo de Zorrilla, Estación..."
-          />
-          <button type="button" class="btn btn-pick" id="pickDestBtn" title="Tocar en el mapa para elegir Destino">
-            🎯
-          </button>
+        <!-- Acceso directo al interruptor de Carriles Bici desde la pestaña principal -->
+        <div class="layer-card">
+          <div class="layer-row">
+            <label class="layer-info" for="cyclewayToggle">
+              <span class="cyan-line-sample"></span>
+              <div>
+                <div id="cyclewayBtnText">Ver red de carriles bici de Valladolid</div>
+                <div class="layer-sub">Datos en tiempo real OpenStreetMap (Overpass API)</div>
+              </div>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="cyclewayToggle" />
+              <span class="slider"></span>
+            </label>
+          </div>
         </div>
       </div>
 
-      <!-- Banner informativo para selección en el mapa -->
-      <div class="map-pick-banner" id="mapPickBanner">
-        👆 Toca cualquier punto del mapa para fijar el <strong id="mapPickModeName">Origen</strong>
+      <!-- PESTAÑA 2: CAPAS OFICIALES GISAVA + GEOCyL + MAPA BASE -->
+      <div class="tab-pane" id="tabLayers">
+        <!-- Capa 1: Red Oficial Ayuntamiento GISAVA / Plano A0 -->
+        <div class="layer-card">
+          <div class="layer-row">
+            <label class="layer-info" for="gisavaCyclewayToggle">
+              <span>🏛️</span>
+              <div>
+                <div>Red Oficial Carril Bici Ayto. (GISAVA)</div>
+                <div class="layer-sub">265 tramos oficiales por tipología y sentido + Alfoz</div>
+              </div>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="gisavaCyclewayToggle" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="gisava-sublegend">
+            <div class="sublegend-item"><span class="swatch-line" style="background: var(--gisava-excl2);"></span>Exclusivo 2 sentidos</div>
+            <div class="sublegend-item"><span class="swatch-line" style="background: var(--gisava-excl1);"></span>Exclusivo 1 sentido</div>
+            <div class="sublegend-item"><span class="swatch-line" style="background: var(--gisava-comp2);"></span>Compartido 2 sentidos</div>
+            <div class="sublegend-item"><span class="swatch-line" style="background: var(--gisava-comp1);"></span>Compartido 1 sentido</div>
+            <div class="sublegend-item"><span class="swatch-dashed" style="border-color: var(--gisava-ciclo);"></span>Ciclocarril 30 km/h</div>
+            <div class="sublegend-item"><span class="swatch-dashed" style="border-color: var(--gisava-alfoz);"></span>Otros Municipios</div>
+          </div>
+        </div>
+
+        <!-- Capa 2: Estaciones BIKI -->
+        <div class="layer-card">
+          <div class="layer-row">
+            <label class="layer-info" for="bikiToggle">
+              <span class="poi-badge poi-biki">B</span>
+              <div>
+                <div>Estaciones Préstamo BIKI (101 puntos)</div>
+                <div class="layer-sub">Servicio público de bicicletas de Valladolid (GISAVA)</div>
+              </div>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="bikiToggle" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Capa 3: PARKIBICI -->
+        <div class="layer-card">
+          <div class="layer-row">
+            <label class="layer-info" for="parkibiciToggle">
+              <span class="poi-badge poi-parkibici">P</span>
+              <div>
+                <div>Aparcamientos Seguros PARKIBICI (40)</div>
+                <div class="layer-sub">Recintos cerrados municipales con nº de plazas</div>
+              </div>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="parkibiciToggle" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Capa 4: Aparcabicis de calle -->
+        <div class="layer-card">
+          <div class="layer-row">
+            <label class="layer-info" for="aparcabicisToggle">
+              <span class="poi-badge poi-aparcabicis">🚲</span>
+              <div>
+                <div>Aparcabicis en Vía Pública (164 puntos)</div>
+                <div class="layer-sub">Soportes junto a centros cívicos, facultades y calles</div>
+              </div>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="aparcabicisToggle" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Capa 5: Tramos en Proyecto GEOCyL -->
+        <div class="layer-card">
+          <div class="layer-row">
+            <label class="layer-info" for="geocylProjectedToggle">
+              <span>🚧</span>
+              <div>
+                <div>Corredores en Proyecto (Mapa GEOCyL)</div>
+                <div class="layer-sub">17 ejes de conexión previstos en el estudio ciclista</div>
+              </div>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="geocylProjectedToggle" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Selector de Mapa Base -->
+        <div class="routes-section-title">Mapa Base Cartográfico</div>
+        <div class="basemap-grid">
+          <button type="button" class="basemap-btn active" data-basemap="voyager">🗺️ Claro</button>
+          <button type="button" class="basemap-btn" data-basemap="dark">🌙 Oscuro</button>
+          <button type="button" class="basemap-btn" data-basemap="cyclosm">🚲 CyclOSM</button>
+          <button type="button" class="basemap-btn" data-basemap="sat">🛰️ Satélite</button>
+        </div>
       </div>
 
-      <!-- Botones de Cálculo y Limpieza -->
-      <div class="actions-row">
-        <button type="button" class="btn btn-primary" id="calcRouteBtn">
-          ⚡ Calcular ruta segura
-        </button>
-        <button type="button" class="btn btn-clear" id="clearRouteBtn" title="Limpiar ruta y marcadores">
-          🗑️
-        </button>
-      </div>
+      <!-- PESTAÑA 3: RUTAS GEOCyL, EJES URBANOS Y PLANOS OFICIALES -->
+      <div class="tab-pane" id="tabRoutes">
+        <div class="routes-section-title">Ejes Urbanos (Plano Carril Bici Ayto.)</div>
+        <div class="route-preset-list" id="urbanRoutesList"></div>
 
-      <!-- Interruptor de Red de Carriles Bici (Overpass API) -->
-      <div class="cycleway-toggle-bar">
-        <label class="cycleway-toggle-label" for="cyclewayToggle">
-          <span class="cyan-line-sample"></span>
-          <span id="cyclewayBtnText">Ver red de carriles bici de Valladolid</span>
-        </label>
-        <label class="switch">
-          <input type="checkbox" id="cyclewayToggle" />
-          <span class="slider"></span>
-        </label>
+        <div class="routes-section-title">EuroVelo 1 y Rutas Verdes (Mapa GEOCyL)</div>
+        <div class="route-preset-list" id="geocylRoutesList"></div>
+
+        <div class="routes-section-title">Cartografía y Documentos Oficiales</div>
+        <div class="official-links-grid">
+          <a class="official-link-card" href="https://www10.ava.es/cartografia/Descarga_pdf/PlanoCarrilBici_A0_H.pdf" target="_blank" rel="noopener">
+            <span>📄</span>
+            <span>Plano Oficial Carril Bici A0 (PDF Ayto.)</span>
+          </a>
+          <a class="official-link-card" href="https://gisava.valladolid.es/portal/apps/experiencebuilder/experience/?id=d0c78a0425814606a31edf86edc9cd80" target="_blank" rel="noopener">
+            <span>🏛️</span>
+            <span>Visor GISAVA Ayuntamiento</span>
+          </a>
+          <a class="official-link-card" href="https://www.geocyl.com/mapa-movilidad-ciclista-valladolid/" target="_blank" rel="noopener">
+            <span>🧭</span>
+            <span>Mapa Movilidad Ciclista GEOCyL</span>
+          </a>
+          <a class="official-link-card" href="https://www.valladolid.es/es/ayuntamiento/normativa/movilidad-bicicleta-termino-municipal-valladolid-ordenanza.ficheros/235332-MOVILIDADBICICLETASORD.pdf" target="_blank" rel="noopener">
+            <span>⚖️</span>
+            <span>Ordenanza Ciclista Valladolid (PDF)</span>
+          </a>
+        </div>
       </div>
     </div>
   </section>
@@ -753,8 +1208,8 @@
         <span>Otros tramos</span>
       </div>
       <div class="legend-item">
-        <span class="legend-swatch" style="background: #00d2ff; height: 3px;"></span>
-        <span>Red OSM</span>
+        <span class="legend-swatch" style="background: #00a884; height: 3.5px;"></span>
+        <span>Red Oficial Ayto.</span>
       </div>
     </div>
   </aside>
@@ -772,49 +1227,232 @@
      *************************************************************************/
     const ORS_API_KEY = 'TU_API_KEY_AQUI';
 
-    // Constantes geográficas de Valladolid
+    // Constantes geográficas y endpoints oficiales GISAVA (Ayuntamiento de Valladolid)
     const VALLADOLID_CENTER = [41.6523, -4.7245];
     const VALLADOLID_ZOOM = 14;
     const VALLADOLID_BBOX = '41.58,-4.80,41.70,-4.68';
+    const GISAVA_CARRIL_SERVER = 'https://gisava.valladolid.es/server/rest/services/CarrilBiciTematico_Feature/MapServer';
+    const GISAVA_SEARCH_SERVER = 'https://gisava.valladolid.es/server/rest/services/BuscadorNew/FeatureServer';
+
+    // Ejes ciclistas urbanos destacados del Plano Oficial del Ayuntamiento (PlanoCarrilBici_A0_H.pdf)
+    const URBAN_PRESET_ROUTES = [
+      {
+        name: 'Eje Paseo de Zorrilla (Centro ↔ Vallsur)',
+        meta: 'Carril bici exclusivo 2 sentidos · 4.1 km',
+        origin: { lat: 41.6497, lon: -4.7289, label: 'Plaza de Zorrilla' },
+        dest: { lat: 41.6194, lon: -4.7483, label: 'Paseo de Zorrilla (Vallsur)' }
+      },
+      {
+        name: 'Corredor Ribera del Pisuerga (Norte ↔ Sur)',
+        meta: 'Senda verde y carril exclusivo junto al río · 4.8 km',
+        origin: { lat: 41.6689, lon: -4.7235, label: 'Parque Ribera de Castilla' },
+        dest: { lat: 41.6352, lon: -4.7495, label: 'Puente Hispanoamérica' }
+      },
+      {
+        name: 'Eje Universitario y Cauce del Esgueva',
+        meta: 'Carril exclusivo Paseo del Cauce y Campus Delibes · 3.4 km',
+        origin: { lat: 41.6492, lon: -4.7192, label: 'Plaza Circular' },
+        dest: { lat: 41.6634, lon: -4.7055, label: 'Campus Miguel Delibes' }
+      },
+      {
+        name: 'Conexión Parquesol (Río ↔ Pz. Marcos Fernández)',
+        meta: 'Carril bici segregado de subida a Parquesol · 2.6 km',
+        origin: { lat: 41.6443, lon: -4.7366, label: 'Puente del Poniente' },
+        dest: { lat: 41.6388, lon: -4.7586, label: 'Plaza Marcos Fernández (Parquesol)' }
+      }
+    ];
+
+    // Rutas ciclistas y recreativas extraídas del Mapa de Movilidad Ciclista de GEOCyL
+    const GEOCYL_ROUTES = [
+      {
+        category: 'EuroVelo 1',
+        name: 'EuroVelo 1: Valladolid – Palencia (Canal de Castilla)',
+        meta: 'Ruta de la Costa Atlántica · Senda del Canal de Castilla',
+        color: '#10b981',
+        start: [41.65253, -4.72428],
+        end: [42.01103, -4.5383],
+        coords: [[41.65253,-4.72428],[41.65016,-4.73065],[41.64964,-4.73535],[41.65097,-4.7388],[41.65363,-4.7371],[41.65736,-4.73542],[41.66022,-4.73424],[41.66109,-4.73938],[41.66095,-4.74279],[41.66243,-4.74092],[41.66624,-4.73856],[41.66854,-4.7359],[41.67196,-4.73219],[41.6754,-4.72826],[41.67927,-4.72372],[41.68093,-4.72031],[41.68474,-4.71858],[41.68794,-4.71875],[41.68978,-4.71738],[41.69348,-4.71534],[41.69698,-4.71312],[41.70224,-4.71008],[41.70665,-4.70587],[41.71266,-4.69986],[41.71738,-4.69498],[41.72089,-4.691],[41.72387,-4.68848],[41.72613,-4.68445],[41.72713,-4.68101],[41.72924,-4.67773],[41.73424,-4.67304],[41.73826,-4.66685],[41.74212,-4.66066],[41.74673,-4.65269],[41.75145,-4.64339],[41.75423,-4.63713],[41.75582,-4.63338],[41.76399,-4.62589],[41.76798,-4.6221],[41.77372,-4.61694],[41.78012,-4.61106],[41.78734,-4.60443],[41.79296,-4.6008],[41.79735,-4.59419],[41.8017,-4.58624],[41.8053,-4.5821],[41.80776,-4.5815],[41.8161,-4.57834],[41.82355,-4.57405],[41.83158,-4.56865],[41.83778,-4.5645],[41.84567,-4.5592],[41.85506,-4.55289],[41.86179,-4.54842],[41.86945,-4.54336],[41.8724,-4.54102],[41.87712,-4.54145],[41.88129,-4.53907],[41.88641,-4.53545],[41.89058,-4.53257],[41.89681,-4.53138],[41.90244,-4.53175],[41.9111,-4.52836],[41.9154,-4.52813],[41.92125,-4.52456],[41.92722,-4.52254],[41.93654,-4.51768],[41.9442,-4.51616],[41.95057,-4.5177],[41.95488,-4.51952],[41.95924,-4.52367],[41.9633,-4.52452],[41.96862,-4.52823],[41.97295,-4.532],[41.97669,-4.53406],[41.98186,-4.53746],[41.9867,-4.53698],[41.99213,-4.54147],[41.99749,-4.54696],[42.00133,-4.5505],[42.00494,-4.54482],[42.00839,-4.53904],[42.01103,-4.5383]]
+      },
+      {
+        category: 'EuroVelo 1',
+        name: 'EuroVelo 1: Valladolid – Tordesillas (Ribera del Duero)',
+        meta: 'Ruta de la Costa Atlántica · Sur por Simancas y Tordesillas',
+        color: '#10b981',
+        start: [41.65253, -4.72428],
+        end: [41.49963, -5.00035],
+        coords: [[41.65253,-4.72428],[41.65016,-4.73065],[41.64964,-4.73535],[41.65039,-4.73932],[41.64756,-4.74095],[41.64476,-4.74333],[41.64253,-4.7442],[41.63908,-4.74594],[41.63571,-4.74833],[41.63319,-4.75077],[41.62901,-4.7554],[41.6272,-4.75938],[41.62516,-4.75632],[41.62299,-4.7534],[41.62149,-4.74816],[41.61614,-4.74867],[41.61245,-4.75067],[41.60786,-4.7536],[41.60166,-4.75564],[41.59361,-4.75855],[41.58598,-4.75936],[41.57581,-4.77017],[41.5641,-4.78544],[41.56293,-4.79029],[41.56578,-4.79919],[41.57982,-4.81375],[41.58592,-4.82128],[41.58961,-4.82483],[41.58364,-4.8318],[41.57648,-4.8415],[41.56906,-4.84955],[41.56394,-4.85937],[41.55653,-4.86712],[41.54866,-4.86624],[41.5359,-4.86188],[41.5312,-4.87339],[41.52888,-4.88265],[41.52407,-4.87772],[41.51685,-4.88594],[41.51061,-4.89193],[41.50827,-4.90747],[41.50579,-4.92485],[41.50305,-4.93907],[41.50257,-4.9556],[41.5005,-4.96803],[41.4989,-4.97991],[41.49923,-4.98956],[41.49963,-5.00035]]
+      },
+      {
+        category: 'Ruta Recreativa GEOCyL',
+        name: 'Canal del Duero – Quintanilla de Onésimo',
+        meta: 'Corredor verde del Canal del Duero hacia la Ribera',
+        color: '#f59e0b',
+        start: [41.60709, -4.76032],
+        end: [41.62584, -4.36672],
+        coords: [[41.60709,-4.76032],[41.60143,-4.7638],[41.59477,-4.76722],[41.58987,-4.76307],[41.58805,-4.75495],[41.58899,-4.74209],[41.58808,-4.7333],[41.58184,-4.72961],[41.57353,-4.72911],[41.57321,-4.71981],[41.5775,-4.71342],[41.58025,-4.70582],[41.57943,-4.68618],[41.58152,-4.68189],[41.58064,-4.67161],[41.58491,-4.64854],[41.59256,-4.62606],[41.59518,-4.59876],[41.59032,-4.58965],[41.58421,-4.57962],[41.58458,-4.56013],[41.59394,-4.56222],[41.59143,-4.55314],[41.59836,-4.54267],[41.59158,-4.53189],[41.59706,-4.51804],[41.60932,-4.49859],[41.61062,-4.47805],[41.60444,-4.4592],[41.6145,-4.4433],[41.60747,-4.42731],[41.61523,-4.41252],[41.62746,-4.39898],[41.62912,-4.38416],[41.62584,-4.36672]]
+      },
+      {
+        category: 'Ruta Recreativa GEOCyL',
+        name: 'Ruta de Pinares – Valdestillas y Puente Duero',
+        meta: 'Itinerario por el Pinar de Antequera, Adaja y Valdestillas',
+        color: '#22c55e',
+        start: [41.61491, -4.69056],
+        end: [41.53128, -4.74795],
+        coords: [[41.61491,-4.69056],[41.61213,-4.68832],[41.60784,-4.68728],[41.59568,-4.68019],[41.59165,-4.68472],[41.58792,-4.69508],[41.57926,-4.69438],[41.56986,-4.69772],[41.56292,-4.70396],[41.55768,-4.70834],[41.55169,-4.70941],[41.54556,-4.71189],[41.5407,-4.71507],[41.5377,-4.72293],[41.53371,-4.72742],[41.53351,-4.73599],[41.53204,-4.74158],[41.53141,-4.74749],[41.52672,-4.74493],[41.52233,-4.73901],[41.51829,-4.73264],[41.512,-4.72641],[41.50707,-4.72125],[41.50367,-4.73275],[41.49787,-4.74741],[41.49319,-4.76416],[41.49075,-4.76939]]
+      },
+      {
+        category: 'Ruta Recreativa GEOCyL',
+        name: 'Canal de Castilla – Ramal de Campos (Medina de Rioseco)',
+        meta: 'Dársena del Canal en Valladolid (La Victoria) hasta Rioseco',
+        color: '#38bdf8',
+        start: [41.64857, -4.75887],
+        end: [41.88321, -5.04484],
+        coords: [[41.64857,-4.75887],[41.65202,-4.76287],[41.65753,-4.77602],[41.66102,-4.77796],[41.6623,-4.78348],[41.65753,-4.79371],[41.66563,-4.80525],[41.67361,-4.80575],[41.6751,-4.81709],[41.67455,-4.83111],[41.67145,-4.8674],[41.6683,-4.87416],[41.68409,-4.87244],[41.69295,-4.8801],[41.68834,-4.89394],[41.69809,-4.9073],[41.69619,-4.93236],[41.68029,-4.94494],[41.6956,-4.97128],[41.70809,-4.97705],[41.71245,-4.98702],[41.71917,-4.99612],[41.72909,-4.99964],[41.74056,-5.01429],[41.75516,-5.02638],[41.77231,-5.03837],[41.78094,-5.0425],[41.7935,-5.03808],[41.8102,-5.03914],[41.81473,-5.01938],[41.83253,-5.03525],[41.84214,-5.03638],[41.85154,-5.04497],[41.87038,-5.04883],[41.88321,-5.04484]]
+      },
+      {
+        category: 'Ruta Recreativa GEOCyL',
+        name: 'Montes Torozos – Villalba de los Alcores',
+        meta: 'Salida Norte desde Valladolid hacia Fuente el Sol y Torozos',
+        color: '#a855f7',
+        start: [41.66657, -4.7355],
+        end: [41.90039, -4.86452],
+        coords: [[41.66657,-4.7355],[41.67124,-4.73669],[41.67551,-4.73534],[41.68046,-4.74276],[41.69273,-4.75074],[41.69874,-4.75576],[41.70703,-4.76274],[41.71594,-4.76101],[41.73276,-4.7599],[41.74169,-4.76253],[41.74846,-4.77563],[41.75657,-4.7849],[41.79067,-4.8261],[41.80402,-4.833],[41.84903,-4.84752],[41.86011,-4.85836],[41.86944,-4.85825],[41.8808,-4.85681],[41.88997,-4.86175],[41.90039,-4.86452]]
+      },
+      {
+        category: 'Ruta Recreativa GEOCyL',
+        name: 'Páramo de San Isidro – Villabáñez',
+        meta: 'Conexión Este desde Pajarillos / San Isidro hacia Villabáñez',
+        color: '#ec4899',
+        start: [41.64666, -4.69901],
+        end: [41.63015, -4.52804],
+        coords: [[41.64666,-4.69901],[41.64768,-4.67996],[41.64507,-4.67086],[41.64387,-4.6613],[41.64601,-4.64836],[41.64877,-4.6368],[41.65331,-4.62789],[41.64895,-4.62254],[41.64584,-4.61039],[41.64484,-4.60209],[41.63846,-4.58552],[41.63518,-4.57462],[41.63409,-4.55945],[41.6301,-4.54505],[41.63113,-4.53169],[41.63015,-4.52804]]
+      },
+      {
+        category: 'Ruta Recreativa GEOCyL',
+        name: 'Valle del Esgueva (Valladolid – Encinas de Esgueva)',
+        meta: 'Senda ciclable paralela al río Esgueva desde Valladolid',
+        color: '#14b8a6',
+        start: [41.65109, -4.6987],
+        end: [41.74542, -4.07967],
+        coords: [[41.65109,-4.6987],[41.64944,-4.6742],[41.64874,-4.65881],[41.6554,-4.63846],[41.65882,-4.62201],[41.66615,-4.59093],[41.67546,-4.57032],[41.67865,-4.549],[41.68988,-4.53071],[41.69273,-4.51355],[41.70072,-4.48103],[41.7299,-4.38879],[41.73379,-4.35233],[41.73746,-4.33214],[41.74105,-4.31578],[41.74489,-4.30086],[41.74131,-4.26762],[41.74627,-4.23993],[41.75337,-4.21718],[41.76117,-4.19765],[41.75987,-4.17441],[41.75898,-4.14668],[41.75478,-4.11926],[41.75405,-4.09592],[41.74542,-4.07967]]
+      }
+    ];
+
+    // 17 Tramos proyectados en el estudio de Movilidad Ciclista de GEOCyL
+    const GEOCYL_PROJECTED_LINES = [
+      [[41.64744,-4.71781],[41.64769,-4.71854],[41.64799,-4.71962],[41.6482,-4.72017],[41.6483,-4.72054],[41.64837,-4.72067],[41.64876,-4.72169],[41.64887,-4.72216],[41.64896,-4.72264],[41.649,-4.7231],[41.6492,-4.72442]],
+      [[41.64801,-4.7197],[41.64778,-4.71978],[41.64742,-4.7199],[41.647,-4.71996],[41.64652,-4.71987],[41.64613,-4.71976],[41.64602,-4.72014],[41.64599,-4.72076],[41.64593,-4.72165],[41.64593,-4.72248],[41.646,-4.72305],[41.64612,-4.72328],[41.64662,-4.72386],[41.64724,-4.7245],[41.64784,-4.72523],[41.64817,-4.72567],[41.64855,-4.7259]],
+      [[41.65469,-4.71624],[41.65373,-4.71565],[41.65362,-4.71573],[41.6526,-4.71642],[41.65154,-4.71722],[41.65123,-4.71738],[41.65044,-4.7178],[41.64941,-4.7184],[41.64895,-4.71881],[41.64848,-4.71926],[41.64801,-4.7197]],
+      [[41.65218,-4.71822],[41.65146,-4.71726]],
+      [[41.65723,-4.71944],[41.65792,-4.72164],[41.6576,-4.72214],[41.65708,-4.72255],[41.65631,-4.72316],[41.65558,-4.72364]],
+      [[41.65493,-4.72915],[41.65519,-4.72905],[41.6554,-4.72892],[41.65574,-4.72852],[41.6563,-4.7279],[41.65675,-4.72745],[41.65714,-4.72787],[41.65774,-4.72791],[41.65788,-4.728],[41.65851,-4.7288],[41.6586,-4.72894],[41.65879,-4.72958],[41.65891,-4.73008],[41.65916,-4.7302]],
+      [[41.65487,-4.72912],[41.65468,-4.72904],[41.65435,-4.72905],[41.65418,-4.72908],[41.65409,-4.72915],[41.65373,-4.72941],[41.65352,-4.72951],[41.65327,-4.72942]],
+      [[41.65362,-4.72447],[41.65372,-4.72478],[41.65389,-4.72524],[41.65397,-4.7258],[41.65404,-4.72622],[41.6543,-4.72704],[41.65448,-4.72697],[41.65468,-4.72694],[41.65489,-4.72699],[41.65488,-4.72776],[41.65486,-4.72903]],
+      [[41.65569,-4.72536],[41.65511,-4.72567],[41.65486,-4.72579],[41.65404,-4.72622]],
+      [[41.66091,-4.71701],[41.66242,-4.71922],[41.66288,-4.71998],[41.66431,-4.7222],[41.66456,-4.7226],[41.66409,-4.72309],[41.66345,-4.72388],[41.66269,-4.72476],[41.66129,-4.72638],[41.66048,-4.72753],[41.65988,-4.72869]],
+      [[41.66114,-4.7407],[41.66116,-4.74024],[41.66113,-4.73929],[41.66106,-4.73874],[41.66089,-4.7376],[41.66066,-4.73609],[41.6605,-4.73503],[41.66055,-4.73479]],
+      [[41.6552,-4.74666],[41.65514,-4.74566],[41.65502,-4.74369],[41.65498,-4.74309],[41.65488,-4.74287],[41.6551,-4.74266],[41.65568,-4.7422],[41.65554,-4.74187],[41.65512,-4.74133],[41.65473,-4.74071],[41.65432,-4.73986],[41.65396,-4.73896],[41.65397,-4.73841]],
+      [[41.66657,-4.7355],[41.66651,-4.73543],[41.66634,-4.73533],[41.6661,-4.73523],[41.66575,-4.73502],[41.66533,-4.73476],[41.66494,-4.73448],[41.66482,-4.73357],[41.66467,-4.73243],[41.66552,-4.73208],[41.66606,-4.73185],[41.66572,-4.73102],[41.6654,-4.73028]],
+      [[41.62949,-4.72724],[41.63027,-4.72689],[41.63247,-4.72591],[41.63366,-4.72539],[41.63574,-4.72445],[41.63709,-4.72375],[41.63927,-4.72269],[41.64006,-4.72216],[41.6407,-4.72028],[41.64228,-4.72126],[41.64282,-4.72145],[41.64371,-4.72095],[41.64476,-4.72085],[41.64608,-4.72073],[41.6473,-4.7206],[41.64834,-4.72061]],
+      [[41.64446,-4.72788],[41.64445,-4.72852],[41.64439,-4.72969],[41.64434,-4.73074],[41.64442,-4.73174],[41.64464,-4.73264],[41.64503,-4.73342]],
+      [[41.63576,-4.72142],[41.63582,-4.71788],[41.63584,-4.71661],[41.63568,-4.71643],[41.63521,-4.71663],[41.63493,-4.71644],[41.63467,-4.7156]],
+      [[41.62652,-4.69935],[41.6261,-4.69965],[41.62452,-4.69845],[41.62286,-4.69708],[41.62129,-4.69581],[41.62093,-4.69533]]
+    ];
 
     // Estado de la aplicación
     const state = {
-      origin: null,        // { lat, lon, label }
-      destination: null,   // { lat, lon, label }
-      pickMode: 'origin',  // 'origin' | 'destination'
+      origin: null,
+      destination: null,
+      pickMode: 'origin',
       originMarker: null,
       destMarker: null,
+      baseTileLayer: null,
       routeLayerGroup: null,
       cyclewaysLayerGroup: null,
+      gisavaCyclewaysLayer: null,
+      bikiLayer: null,
+      parkibiciLayer: null,
+      aparcabicisLayer: null,
+      geocylProjectedLayer: null,
+      geocylRouteOverlay: null,
       cyclewaysLoaded: false,
+      gisavaCyclewaysLoaded: false,
+      bikiLoaded: false,
+      parkibiciLoaded: false,
+      aparcabicisLoaded: false,
+      geocylProjectedLoaded: false,
       customApiKey: localStorage.getItem('biciadolid_ors_key') || ''
     };
 
     /*************************************************************************
-     * 1. INICIALIZACIÓN DEL MAPA BASE (Leaflet.js)
+     * 1. INICIALIZACIÓN DEL MAPA BASE (Leaflet.js) Y SELECTOR CARTOGRÁFICO
      *************************************************************************/
     const map = L.map('map', {
       zoomControl: false
     }).setView(VALLADOLID_CENTER, VALLADOLID_ZOOM);
 
-    // Control de zoom abajo a la derecha para mejor ergonomía móvil
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // Capa base CartoDB Voyager / OpenStreetMap de alta legibilidad
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; CARTO',
-      subdomains: 'abcd',
-      maxZoom: 20
-    }).addTo(map);
+    const BASEMAPS = {
+      voyager: {
+        url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        options: { attribution: '&copy; OpenStreetMap &copy; CARTO | GISAVA Ayto. Valladolid', subdomains: 'abcd', maxZoom: 20 }
+      },
+      dark: {
+        url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+        options: { attribution: '&copy; OpenStreetMap &copy; CARTO | GISAVA Ayto. Valladolid', subdomains: 'abcd', maxZoom: 20 }
+      },
+      cyclosm: {
+        url: 'https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
+        options: { attribution: '&copy; OpenStreetMap &copy; CyclOSM | GISAVA', maxZoom: 20 }
+      },
+      sat: {
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        options: { attribution: '&copy; Esri &copy; IGN PNOA Valladolid', maxZoom: 19 }
+      }
+    };
 
-    // Grupos de capas: carriles bici al fondo, ruta calculada encima
+    state.baseTileLayer = L.tileLayer(BASEMAPS.voyager.url, BASEMAPS.voyager.options).addTo(map);
+
+    // Grupos de capas ordenados
+    state.gisavaCyclewaysLayer = L.layerGroup().addTo(map);
     state.cyclewaysLayerGroup = L.layerGroup();
+    state.geocylProjectedLayer = L.layerGroup();
+    state.geocylRouteOverlay = L.layerGroup().addTo(map);
+    state.aparcabicisLayer = L.layerGroup();
+    state.parkibiciLayer = L.layerGroup();
+    state.bikiLayer = L.layerGroup();
     state.routeLayerGroup = L.layerGroup().addTo(map);
+
+    // Cambiar mapa base
+    document.querySelectorAll('.basemap-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.basemap;
+        const cfg = BASEMAPS[key];
+        if (!cfg) return;
+        document.querySelectorAll('.basemap-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        map.removeLayer(state.baseTileLayer);
+        state.baseTileLayer = L.tileLayer(cfg.url, cfg.options).addTo(map);
+        state.baseTileLayer.bringToBack();
+      });
+    });
+
+    // Navegación por pestañas
+    document.querySelectorAll('.tab-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.dataset.tab;
+        document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach((p) => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(targetId).classList.add('active');
+      });
+    });
 
     /*************************************************************************
      * UTILIDADES DE INTERFAZ Y MANEJO DE ERRORES
      *************************************************************************/
-    function showToast(message, type = 'info', duration = 4500) {
+    function showToast(message, type = 'info', duration = 4200) {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
       toast.className = `toast ${type}`;
@@ -882,7 +1520,301 @@
     });
 
     /*************************************************************************
-     * 2. CAPA DE CARRILES BICI ACTUALIZADOS (Overpass API)
+     * 2A. CAPA OFICIAL DEL AYUNTAMIENTO DE VALLADOLID (GISAVA + PLANO A0)
+     *     Carriles bici por tipología, BIKI, PARKIBICI y Aparcabicis
+     *************************************************************************/
+    function getGisavaLaneStyle(tipo, sentido, isAlfoz = false) {
+      if (isAlfoz) {
+        return { color: '#267300', weight: 3.5, dashArray: '6, 6', label: 'Carril bici otros Municipios (Alfoz)' };
+      }
+      const t = String(tipo || '').toLowerCase().trim();
+      const s = String(sentido || '').trim();
+
+      if (t === 'exclusivo' && s === '2') {
+        return { color: '#00a884', weight: 3.8, dashArray: null, label: 'Carril bici exclusivo (2 sentidos)' };
+      }
+      if (t === 'exclusivo' && s === '1') {
+        return { color: '#ef4444', weight: 3.5, dashArray: null, label: 'Carril bici exclusivo (1 sentido)' };
+      }
+      if (t === 'compartido' && s === '2') {
+        return { color: '#ffaa00', weight: 3.5, dashArray: null, label: 'Carril compartido / Acera-bici (2 sentidos)' };
+      }
+      if (t === 'compartido' && s === '1') {
+        return { color: '#005ce6', weight: 3.5, dashArray: null, label: 'Carril compartido (1 sentido)' };
+      }
+      if (t.startsWith('ciclocarri')) {
+        return { color: '#c500ff', weight: 3.2, dashArray: '5, 6', label: 'Ciclocarril 30 km/h (Prioridad ciclista)' };
+      }
+      return { color: '#00a884', weight: 3.2, dashArray: null, label: 'Vía ciclista municipal' };
+    }
+
+    async function loadGisavaOfficialCycleways() {
+      if (state.gisavaCyclewaysLoaded) {
+        state.gisavaCyclewaysLayer.addTo(map);
+        return;
+      }
+
+      try {
+        const [resUrban, resAlfoz] = await Promise.all([
+          fetch(`${GISAVA_CARRIL_SERVER}/8/query?where=1%3D1&outFields=TIPO,SENTIDO,CONSTRUCCION,SHAPE.LEN&returnGeometry=true&outSR=4326&f=geojson`),
+          fetch(`${GISAVA_CARRIL_SERVER}/9/query?where=1%3D1&outFields=TIPO,SENTIDO,SHAPE.LEN&returnGeometry=true&outSR=4326&f=geojson`)
+        ]);
+
+        if (!resUrban.ok) throw new Error('Error al conectar con GISAVA Ayuntamiento de Valladolid');
+        const dataUrban = await resUrban.json();
+        const dataAlfoz = resAlfoz.ok ? await resAlfoz.json() : { features: [] };
+
+        const renderFeature = (feat, isAlfoz) => {
+          const props = feat.properties || {};
+          const style = getGisavaLaneStyle(props.TIPO, props.SENTIDO, isAlfoz);
+          const lenMeters = Math.round(Number(props['SHAPE.LEN']) || 0);
+          const yearBadge = props.CONSTRUCCION ? `<br><span style="color:#38bdf8;">🆕 Tramo construido en ${props.CONSTRUCCION}</span>` : '';
+
+          const layer = L.geoJSON(feat, {
+            style: {
+              color: style.color,
+              weight: style.weight,
+              opacity: 0.85,
+              dashArray: style.dashArray
+            }
+          });
+
+          layer.bindPopup(`
+            <div style="font-size:0.8rem;line-height:1.35;">
+              <strong>🏛️ ${style.label}</strong><br>
+              <span>Longitud del tramo: <b>${lenMeters} m</b></span>
+              ${yearBadge}
+            </div>
+          `);
+          layer.addTo(state.gisavaCyclewaysLayer);
+        };
+
+        (dataUrban.features || []).forEach((f) => renderFeature(f, false));
+        (dataAlfoz.features || []).forEach((f) => renderFeature(f, true));
+
+        state.gisavaCyclewaysLoaded = true;
+        state.gisavaCyclewaysLayer.addTo(map);
+      } catch (err) {
+        console.warn('No se pudo cargar la capa GISAVA inicial:', err);
+      }
+    }
+
+    document.getElementById('gisavaCyclewayToggle').addEventListener('change', (e) => {
+      if (e.target.checked) {
+        loadGisavaOfficialCycleways();
+        showToast('Red oficial de carriles bici del Ayuntamiento (GISAVA) activada.', 'info', 2500);
+      } else {
+        map.removeLayer(state.gisavaCyclewaysLayer);
+        showToast('Red oficial GISAVA ocultada.', 'info', 2000);
+      }
+    });
+
+    // Función auxiliar para botones "Usar como Origen / Destino" dentro de los popups
+    window.setPointFromPopup = function(type, lat, lon, label) {
+      if (type === 'origin') {
+        setOriginPoint(lat, lon, label);
+        showToast(`Origen fijado: ${label}`, 'success', 2400);
+      } else {
+        setDestinationPoint(lat, lon, label);
+        showToast(`Destino fijado: ${label}`, 'success', 2400);
+      }
+      map.closePopup();
+    };
+
+    // Capa BIKI (Layer 1 de GISAVA)
+    async function toggleBikiLayer(enabled) {
+      if (!enabled) {
+        map.removeLayer(state.bikiLayer);
+        return;
+      }
+      if (state.bikiLoaded) {
+        state.bikiLayer.addTo(map);
+        showToast('101 estaciones BIKI visibles en el mapa.', 'info', 2200);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${GISAVA_CARRIL_SERVER}/1/query?where=1%3D1&outFields=DESCRIPCIO,TIPOVIA,DESVIA,NUMVIA&returnGeometry=true&outSR=4326&f=geojson`);
+        if (!res.ok) throw new Error('Error al cargar BIKI');
+        const data = await res.json();
+
+        const icon = L.divIcon({
+          className: '',
+          html: '<div class="poi-badge poi-biki">B</div>',
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        });
+
+        (data.features || []).forEach((f) => {
+          const [lon, lat] = f.geometry.coordinates;
+          const p = f.properties || {};
+          const title = p.DESCRIPCIO || `Estación BIKI (${p.TIPOVIA || ''} ${p.DESVIA || ''})`;
+          const safeTitle = title.replace(/'/g, "\\'");
+
+          L.marker([lat, lon], { icon })
+            .bindPopup(`
+              <div style="font-size:0.8rem;min-width:190px;">
+                <strong>🚲 ${title}</strong>
+                <div class="popup-btn-group">
+                  <button class="popup-btn origin" onclick="setPointFromPopup('origin', ${lat}, ${lon}, '${safeTitle}')">Usar Origen</button>
+                  <button class="popup-btn dest" onclick="setPointFromPopup('dest', ${lat}, ${lon}, '${safeTitle}')">Usar Destino</button>
+                </div>
+              </div>
+            `)
+            .addTo(state.bikiLayer);
+        });
+
+        state.bikiLoaded = true;
+        state.bikiLayer.addTo(map);
+        showToast(`Cargadas ${data.features.length} estaciones oficiales BIKI.`, 'success', 2800);
+      } catch (err) {
+        console.error(err);
+        document.getElementById('bikiToggle').checked = false;
+        showToast('No se pudieron cargar las estaciones BIKI desde GISAVA.', 'error');
+      }
+    }
+
+    document.getElementById('bikiToggle').addEventListener('change', (e) => toggleBikiLayer(e.target.checked));
+
+    // Capa PARKIBICI (Layer 2 de GISAVA)
+    async function toggleParkibiciLayer(enabled) {
+      if (!enabled) {
+        map.removeLayer(state.parkibiciLayer);
+        return;
+      }
+      if (state.parkibiciLoaded) {
+        state.parkibiciLayer.addTo(map);
+        showToast('40 aparcamientos seguros PARKIBICI visibles.', 'info', 2200);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${GISAVA_CARRIL_SERVER}/2/query?where=1%3D1&outFields=NOMBRE,LOCALIZACI,PLAZAS&returnGeometry=true&outSR=4326&f=geojson`);
+        if (!res.ok) throw new Error('Error al cargar PARKIBICI');
+        const data = await res.json();
+
+        const icon = L.divIcon({
+          className: '',
+          html: '<div class="poi-badge poi-parkibici">P</div>',
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        });
+
+        (data.features || []).forEach((f) => {
+          const [lon, lat] = f.geometry.coordinates;
+          const p = f.properties || {};
+          const title = `PARKIBICI ${p.NOMBRE || ''}`.trim();
+          const safeTitle = title.replace(/'/g, "\\'");
+
+          L.marker([lat, lon], { icon })
+            .bindPopup(`
+              <div style="font-size:0.8rem;min-width:190px;">
+                <strong>🔒 ${title}</strong><br>
+                <span>📍 ${p.LOCALIZACI || 'Valladolid'}</span><br>
+                <span>🚲 Capacidad: <b>${p.PLAZAS || '-'} plazas</b></span>
+                <div class="popup-btn-group">
+                  <button class="popup-btn origin" onclick="setPointFromPopup('origin', ${lat}, ${lon}, '${safeTitle}')">Usar Origen</button>
+                  <button class="popup-btn dest" onclick="setPointFromPopup('dest', ${lat}, ${lon}, '${safeTitle}')">Usar Destino</button>
+                </div>
+              </div>
+            `)
+            .addTo(state.parkibiciLayer);
+        });
+
+        state.parkibiciLoaded = true;
+        state.parkibiciLayer.addTo(map);
+        showToast(`Cargados ${data.features.length} aparcamientos seguros PARKIBICI.`, 'success', 2800);
+      } catch (err) {
+        console.error(err);
+        document.getElementById('parkibiciToggle').checked = false;
+        showToast('No se pudieron cargar los puntos PARKIBICI desde GISAVA.', 'error');
+      }
+    }
+
+    document.getElementById('parkibiciToggle').addEventListener('change', (e) => toggleParkibiciLayer(e.target.checked));
+
+    // Capa Aparcabicis en vía pública (Layer 0 de GISAVA)
+    async function toggleAparcabicisLayer(enabled) {
+      if (!enabled) {
+        map.removeLayer(state.aparcabicisLayer);
+        return;
+      }
+      if (state.aparcabicisLoaded) {
+        state.aparcabicisLayer.addTo(map);
+        showToast('164 aparcabicis municipales visibles.', 'info', 2200);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${GISAVA_CARRIL_SERVER}/0/query?where=1%3D1&outFields=TIPO,EDIFICIO,NOMBRE_VIA,N_POLICIA,PLAZAS&returnGeometry=true&outSR=4326&f=geojson`);
+        if (!res.ok) throw new Error('Error al cargar Aparcabicis');
+        const data = await res.json();
+
+        const icon = L.divIcon({
+          className: '',
+          html: '<div class="poi-badge poi-aparcabicis">🚲</div>',
+          iconSize: [20, 20],
+          iconAnchor: [10, 10]
+        });
+
+        (data.features || []).forEach((f) => {
+          const [lon, lat] = f.geometry.coordinates;
+          const p = f.properties || {};
+          const title = p.EDIFICIO || `${p.NOMBRE_VIA || 'Aparcabicis'} ${p.N_POLICIA || ''}`.trim();
+          const safeTitle = title.replace(/'/g, "\\'");
+
+          L.marker([lat, lon], { icon })
+            .bindPopup(`
+              <div style="font-size:0.8rem;min-width:185px;">
+                <strong>🅿️ Aparcabicis: ${title}</strong><br>
+                <span>📍 ${p.NOMBRE_VIA || ''} ${p.N_POLICIA || ''}</span><br>
+                <span>🔧 Tipo: ${p.TIPO || 'Estándar'} · <b>${p.PLAZAS || '-'} plazas</b></span>
+                <div class="popup-btn-group">
+                  <button class="popup-btn origin" onclick="setPointFromPopup('origin', ${lat}, ${lon}, '${safeTitle}')">Usar Origen</button>
+                  <button class="popup-btn dest" onclick="setPointFromPopup('dest', ${lat}, ${lon}, '${safeTitle}')">Usar Destino</button>
+                </div>
+              </div>
+            `)
+            .addTo(state.aparcabicisLayer);
+        });
+
+        state.aparcabicisLoaded = true;
+        state.aparcabicisLayer.addTo(map);
+        showToast(`Cargados ${data.features.length} aparcabicis municipales.`, 'success', 2800);
+      } catch (err) {
+        console.error(err);
+        document.getElementById('aparcabicisToggle').checked = false;
+        showToast('No se pudieron cargar los aparcabicis desde GISAVA.', 'error');
+      }
+    }
+
+    document.getElementById('aparcabicisToggle').addEventListener('change', (e) => toggleAparcabicisLayer(e.target.checked));
+
+    // Capa de Tramos en Proyecto del Mapa de Movilidad Ciclista de GEOCyL
+    document.getElementById('geocylProjectedToggle').addEventListener('change', (e) => {
+      if (e.target.checked) {
+        if (!state.geocylProjectedLoaded) {
+          GEOCYL_PROJECTED_LINES.forEach((lineCoords, idx) => {
+            L.polyline(lineCoords, {
+              color: '#f43f5e',
+              weight: 3.5,
+              dashArray: '8, 6',
+              opacity: 0.9
+            })
+              .bindPopup(`<strong>🚧 Tramo Ciclista en Proyecto #${idx + 1}</strong><br><small>Fuente: Mapa de Movilidad Ciclista de Valladolid (GEOCyL)</small>`)
+              .addTo(state.geocylProjectedLayer);
+          });
+          state.geocylProjectedLoaded = true;
+        }
+        state.geocylProjectedLayer.addTo(map);
+        showToast('Mostrando los 17 tramos proyectados del mapa GEOCyL.', 'info', 2500);
+      } else {
+        map.removeLayer(state.geocylProjectedLayer);
+      }
+    });
+
+    /*************************************************************************
+     * 2B. CAPA DE CARRILES BICI ACTUALIZADOS (Overpass API OpenStreetMap)
      *************************************************************************/
     const cyclewayToggle = document.getElementById('cyclewayToggle');
     const cyclewayBtnText = document.getElementById('cyclewayBtnText');
@@ -890,7 +1822,7 @@
     async function fetchAndRenderCycleways() {
       if (state.cyclewaysLoaded) {
         state.cyclewaysLayerGroup.addTo(map);
-        showToast('Red de carriles bici visible en el mapa.', 'info', 2500);
+        showToast('Red de carriles bici OpenStreetMap visible en el mapa.', 'info', 2500);
         return;
       }
 
@@ -923,7 +1855,7 @@
             L.polyline(latLngs, {
               color: '#00d2ff',
               weight: 2.5,
-              opacity: 0.75,
+              opacity: 0.78,
               interactive: false
             }).addTo(state.cyclewaysLayerGroup);
             count++;
@@ -932,10 +1864,9 @@
 
         state.cyclewaysLoaded = true;
         state.cyclewaysLayerGroup.addTo(map);
-        // Asegurar que la ruta activa quede por encima de los carriles bici de fondo
         state.routeLayerGroup.bringToFront?.();
 
-        showToast(`Se han cargado ${count} tramos de carril bici en Valladolid.`, 'success');
+        showToast(`Se han cargado ${count} tramos de carril bici de OpenStreetMap.`, 'success');
       } catch (err) {
         console.error(err);
         cyclewayToggle.checked = false;
@@ -951,12 +1882,12 @@
         fetchAndRenderCycleways();
       } else {
         map.removeLayer(state.cyclewaysLayerGroup);
-        showToast('Capa de carriles bici ocultada.', 'info', 2000);
+        showToast('Capa de carriles bici OSM ocultada.', 'info', 2000);
       }
     });
 
     /*************************************************************************
-     * 3. SELECCIÓN DE ORIGEN Y DESTINO (GPS + Nominatim + Toque en Mapa)
+     * 3. SELECCIÓN DE ORIGEN Y DESTINO (GPS + Buscador GISAVA + Nominatim)
      *************************************************************************/
     function createMarkerIcon(type) {
       const isOrigin = type === 'origin';
@@ -1014,6 +1945,17 @@
       }
     }
 
+    // Invertir Origen y Destino
+    document.getElementById('swapPointsBtn').addEventListener('click', () => {
+      if (!state.origin && !state.destination) return;
+      const tempOrigin = state.origin ? { ...state.origin } : null;
+      const tempDest = state.destination ? { ...state.destination } : null;
+
+      if (tempDest) setOriginPoint(tempDest.lat, tempDest.lon, tempDest.label);
+      if (tempOrigin) setDestinationPoint(tempOrigin.lat, tempOrigin.lon, tempOrigin.label);
+      showToast('Origen y Destino intercambiados.', 'info', 2000);
+    });
+
     // Modo selección tocando sobre el mapa
     const pickOriginBtn = document.getElementById('pickOriginBtn');
     const pickDestBtn = document.getElementById('pickDestBtn');
@@ -1031,7 +1973,6 @@
     pickOriginBtn.addEventListener('click', () => updatePickModeUI('origin'));
     pickDestBtn.addEventListener('click', () => updatePickModeUI('destination'));
 
-    // Al tocar el mapa, asigna Origen o Destino
     map.on('click', (e) => {
       const { lat, lng } = e.latlng;
       const coordText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
@@ -1088,12 +2029,127 @@
       );
     });
 
-    // Geocodificación con Nominatim API
+    // Buscador Callejero Oficial GISAVA (BuscadorNew) + Nominatim API
+    function extractCenterFromGeometry(geom) {
+      if (!geom) return null;
+      if (geom.type === 'Point') {
+        return { lon: geom.coordinates[0], lat: geom.coordinates[1] };
+      }
+      if (geom.type === 'LineString' && geom.coordinates.length > 0) {
+        const mid = geom.coordinates[Math.floor(geom.coordinates.length / 2)];
+        return { lon: mid[0], lat: mid[1] };
+      }
+      if (geom.type === 'MultiLineString' && geom.coordinates.length > 0) {
+        const firstLine = geom.coordinates[0];
+        const mid = firstLine[Math.floor(firstLine.length / 2)];
+        return { lon: mid[0], lat: mid[1] };
+      }
+      if (geom.type === 'Polygon' && geom.coordinates.length > 0) {
+        const ring = geom.coordinates[0];
+        const lonSum = ring.reduce((acc, c) => acc + c[0], 0);
+        const latSum = ring.reduce((acc, c) => acc + c[1], 0);
+        return { lon: lonSum / ring.length, lat: latSum / ring.length };
+      }
+      return null;
+    }
+
+    async function searchGisavaOfficialSuggestions(queryText) {
+      const clean = queryText
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase()
+        .replace(/'/g, '');
+      if (clean.length < 3) return [];
+
+      try {
+        const whereStreets = encodeURIComponent(`UPPER(DESCNORMAL) LIKE '%${clean}%' OR UPPER(DESCUSUARIO) LIKE '%${clean}%'`);
+        const wherePoi = encodeURIComponent(`UPPER(DESCNORMAL) LIKE '%${clean}%' OR UPPER(DESCRIPCIO) LIKE '%${clean}%'`);
+        const whereBarrios = encodeURIComponent(`UPPER(DESNORMAL) LIKE '%${clean}%' OR UPPER(NOMBRE_BAR) LIKE '%${clean}%'`);
+
+        const [resStreets, resPoi, resBarrios] = await Promise.all([
+          fetch(`${GISAVA_SEARCH_SERVER}/1/query?where=${whereStreets}&outFields=DESCUSUARIO,NOM_CALLE&returnGeometry=true&outSR=4326&resultRecordCount=4&f=geojson`),
+          fetch(`${GISAVA_SEARCH_SERVER}/2/query?where=${wherePoi}&outFields=DESCRIPCIO,EDIFICIO&returnGeometry=true&outSR=4326&resultRecordCount=3&f=geojson`),
+          fetch(`${GISAVA_SEARCH_SERVER}/3/query?where=${whereBarrios}&outFields=NOMBRE_BAR,BARRIO_COMPLETO&returnGeometry=true&outSR=4326&resultRecordCount=2&f=geojson`)
+        ]);
+
+        const items = [];
+        if (resStreets.ok) {
+          const d = await resStreets.json();
+          (d.features || []).forEach((f) => {
+            const pt = extractCenterFromGeometry(f.geometry);
+            if (pt) items.push({ label: f.properties.DESCUSUARIO || f.properties.NOM_CALLE, badge: 'Calle Ayto.', ...pt });
+          });
+        }
+        if (resBarrios.ok) {
+          const d = await resBarrios.json();
+          (d.features || []).forEach((f) => {
+            const pt = extractCenterFromGeometry(f.geometry);
+            if (pt) items.push({ label: f.properties.BARRIO_COMPLETO || f.properties.NOMBRE_BAR, badge: 'Barrio', ...pt });
+          });
+        }
+        if (resPoi.ok) {
+          const d = await resPoi.json();
+          (d.features || []).forEach((f) => {
+            const pt = extractCenterFromGeometry(f.geometry);
+            if (pt) items.push({ label: f.properties.DESCRIPCIO || f.properties.EDIFICIO, badge: 'Lugar interés', ...pt });
+          });
+        }
+        return items.slice(0, 6);
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function setupAutocomplete(inputId, listId, onSelectPoint) {
+      const inputEl = document.getElementById(inputId);
+      const listEl = document.getElementById(listId);
+      let debounceTimer = null;
+
+      inputEl.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        const val = inputEl.value.trim();
+        if (val.length < 3) {
+          listEl.classList.remove('visible');
+          return;
+        }
+        debounceTimer = setTimeout(async () => {
+          const suggestions = await searchGisavaOfficialSuggestions(val);
+          if (suggestions.length === 0) {
+            listEl.classList.remove('visible');
+            return;
+          }
+          listEl.innerHTML = '';
+          suggestions.forEach((item) => {
+            const row = document.createElement('div');
+            row.className = 'suggestion-item';
+            row.innerHTML = `<span>${item.label}</span><span class="suggestion-badge">${item.badge}</span>`;
+            row.addEventListener('click', () => {
+              onSelectPoint(item.lat, item.lon, item.label);
+              listEl.classList.remove('visible');
+              map.setView([item.lat, item.lon], 15);
+            });
+            listEl.appendChild(row);
+          });
+          listEl.classList.add('visible');
+        }, 260);
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!inputEl.contains(e.target) && !listEl.contains(e.target)) {
+          listEl.classList.remove('visible');
+        }
+      });
+    }
+
+    setupAutocomplete('originInput', 'originSuggestions', setOriginPoint);
+    setupAutocomplete('destInput', 'destSuggestions', setDestinationPoint);
+
+    // Geocodificación con Nominatim API + Fallback al Callejero Oficial GISAVA
     async function geocodeStreetInValladolid(queryText) {
       const cleanQuery = queryText.trim();
       if (!cleanQuery) return null;
 
-      // Si el usuario ya introdujo coordenadas tipo "41.6523, -4.7245"
       const coordMatch = cleanQuery.match(/^(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)$/);
       if (coordMatch) {
         return {
@@ -1103,27 +2159,33 @@
         };
       }
 
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQuery + ', Valladolid, España')}&limit=1`;
-      const response = await fetch(url, {
-        headers: {
-          'Accept': 'application/json'
+      // 1. Intentar primero con Nominatim OpenStreetMap (según requisito técnico)
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQuery + ', Valladolid, España')}&limit=1`;
+        const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        if (response.ok) {
+          const results = await response.json();
+          if (results && results.length > 0) {
+            return {
+              lat: parseFloat(results[0].lat),
+              lon: parseFloat(results[0].lon),
+              display_name: results[0].display_name.split(',').slice(0, 2).join(',')
+            };
+          }
         }
-      });
+      } catch (_) {}
 
-      if (!response.ok) {
-        throw new Error('Error al conectar con el servicio de búsqueda de calles (Nominatim).');
+      // 2. Respaldo con el Callejero Oficial GISAVA del Ayuntamiento de Valladolid
+      const gisavaMatches = await searchGisavaOfficialSuggestions(cleanQuery);
+      if (gisavaMatches.length > 0) {
+        return {
+          lat: gisavaMatches[0].lat,
+          lon: gisavaMatches[0].lon,
+          display_name: gisavaMatches[0].label
+        };
       }
 
-      const results = await response.json();
-      if (!results || results.length === 0) {
-        return null;
-      }
-
-      return {
-        lat: parseFloat(results[0].lat),
-        lon: parseFloat(results[0].lon),
-        display_name: results[0].display_name.split(',').slice(0, 2).join(',')
-      };
+      return null;
     }
 
     /*************************************************************************
@@ -1159,7 +2221,6 @@
       calcBtn.textContent = '⏳ Calculando ruta...';
 
       try {
-        // Resolver Origen por Nominatim si el usuario escribió una calle nueva o no hay coordenadas
         if (originText && (!state.origin || state.origin.label !== originText)) {
           const geoOrigin = await geocodeStreetInValladolid(originText);
           if (!geoOrigin) {
@@ -1168,7 +2229,6 @@
           setOriginPoint(geoOrigin.lat, geoOrigin.lon, geoOrigin.display_name);
         }
 
-        // Resolver Destino por Nominatim si el usuario escribió una calle nueva o no hay coordenadas
         if (destText && (!state.destination || state.destination.label !== destText)) {
           const geoDest = await geocodeStreetInValladolid(destText);
           if (!geoDest) {
@@ -1181,8 +2241,7 @@
           throw new Error('Selecciona un Origen y un Destino (escribiendo una calle, usando el GPS o tocando el mapa).');
         }
 
-        // Petición POST a OpenRouteService GeoJSON
-        // Nota: ORS requiere [longitud, latitud]
+        // Petición POST a OpenRouteService GeoJSON ([longitud, latitud])
         const requestBody = {
           coordinates: [
             [state.origin.lon, state.origin.lat],
@@ -1223,21 +2282,21 @@
         const waytypeSummary = feature.properties?.extras?.waytype?.summary || [];
         const routeSummary = feature.properties?.summary || { distance: 0, duration: 0 };
 
-        // Limpiar ruta anterior
         state.routeLayerGroup.clearLayers();
+        state.geocylRouteOverlay.clearLayers();
 
-        // Dibujar polilíneas separadas según el valor_waytype
+        // Dibujar polilíneas separadas con weight: 6 según el valor_waytype
         waytypeValues.forEach(([startIdx, endIdx, waytypeVal]) => {
           const segmentCoords = coords
             .slice(startIdx, endIdx + 1)
-            .map(([lon, lat]) => [lat, lon]); // Convertir a [lat, lon] para Leaflet
+            .map(([lon, lat]) => [lat, lon]);
 
           const styleInfo = getWaytypeStyle(waytypeVal);
 
           const polyline = L.polyline(segmentCoords, {
             color: styleInfo.color,
             weight: 6,
-            opacity: 0.92,
+            opacity: 0.94,
             lineCap: 'round',
             lineJoin: 'round'
           }).addTo(state.routeLayerGroup);
@@ -1245,7 +2304,6 @@
           polyline.bindPopup(`<strong>${styleInfo.label}</strong><br><small>Waytype ID: ${waytypeVal}</small>`);
         });
 
-        // Ajustar vista del mapa a la ruta completa
         const allLatLngs = coords.map(([lon, lat]) => [lat, lon]);
         if (allLatLngs.length > 0) {
           map.fitBounds(L.latLngBounds(allLatLngs), {
@@ -1254,10 +2312,8 @@
           });
         }
 
-        // Actualizar tarjeta inferior con el Resumen de la Ruta
         renderRouteSummary(routeSummary, waytypeSummary, waytypeValues, coords);
 
-        // En pantallas pequeñas, plegar el panel superior automáticamente para ver mejor la ruta
         if (window.innerWidth < 640 && !topPanel.classList.contains('collapsed')) {
           topPanel.classList.add('collapsed');
           togglePanelText.textContent = 'Controles';
@@ -1285,8 +2341,6 @@
       let dangerPct = 0;
       let otherPct = 0;
 
-      // Usar features[0].properties.extras.waytype.summary
-      // Cada elemento de waytype.summary tiene { value: <waytype>, distance: <metros>, amount: <porcentaje 0-100> }
       if (Array.isArray(waytypeSummary) && waytypeSummary.length > 0) {
         waytypeSummary.forEach((item) => {
           const waytypeVal = Number(item.value);
@@ -1298,7 +2352,6 @@
           else otherPct += amount;
         });
       } else if (waytypeValues.length > 0 && coords.length > 1) {
-        // Fallback por si summary viniera vacío: cálculo geométrico por segmentos
         let safeDist = 0, dangerDist = 0, otherDist = 0;
         waytypeValues.forEach(([s, e, val]) => {
           let segDist = 0;
@@ -1340,6 +2393,106 @@
       document.getElementById('routeSummary').classList.add('visible');
     }
 
+    /*************************************************************************
+     * 6. CATÁLOGO INTERACTIVO DE RUTAS (PLANO AYUNTAMIENTO + MAPA GEOCyL)
+     *************************************************************************/
+    function buildPresetRoutesCatalog() {
+      const urbanContainer = document.getElementById('urbanRoutesList');
+      URBAN_PRESET_ROUTES.forEach((item) => {
+        const card = document.createElement('div');
+        card.className = 'route-preset-card';
+        card.innerHTML = `
+          <div class="route-preset-info">
+            <div class="route-preset-name">${item.name}</div>
+            <div class="route-preset-meta">${item.meta}</div>
+          </div>
+          <div class="route-preset-actions">
+            <button type="button" class="btn-mini green">Cargar A→B</button>
+          </div>
+        `;
+        card.querySelector('button').addEventListener('click', () => {
+          setOriginPoint(item.origin.lat, item.origin.lon, item.origin.label);
+          setDestinationPoint(item.dest.lat, item.dest.lon, item.dest.label);
+          document.querySelector('[data-tab="tabRoute"]').click();
+          if (getActiveOrsKey()) {
+            calculateRoute();
+          } else {
+            map.fitBounds(L.latLngBounds([[item.origin.lat, item.origin.lon], [item.dest.lat, item.dest.lon]]), { padding: [50, 50] });
+            showToast('Puntos A y B cargados. Pulsa "Calcular ruta segura" con tu ORS_API_KEY.', 'info');
+          }
+        });
+        urbanContainer.appendChild(card);
+      });
+
+      const geocylContainer = document.getElementById('geocylRoutesList');
+      GEOCYL_ROUTES.forEach((rt) => {
+        const card = document.createElement('div');
+        card.className = 'route-preset-card';
+        card.innerHTML = `
+          <div class="route-preset-info">
+            <div class="route-preset-name">${rt.name}</div>
+            <div class="route-preset-meta">${rt.meta}</div>
+          </div>
+          <div class="route-preset-actions">
+            <button type="button" class="btn-mini" data-action="view">Ver trazado</button>
+            <button type="button" class="btn-mini green" data-action="route">Ruta ORS</button>
+          </div>
+        `;
+
+        // Ver el trazado original KML de GEOCyL directamente en el mapa (no requiere API key)
+        card.querySelector('[data-action="view"]').addEventListener('click', () => {
+          state.geocylRouteOverlay.clearLayers();
+          state.routeLayerGroup.clearLayers();
+
+          const poly = L.polyline(rt.coords, {
+            color: '#2ecc71',
+            weight: 6,
+            opacity: 0.92
+          }).addTo(state.geocylRouteOverlay);
+
+          // Calcular longitud geométrica aproximada del trazado GEOCyL
+          let distMeters = 0;
+          for (let i = 0; i < rt.coords.length - 1; i++) {
+            distMeters += L.latLng(rt.coords[i]).distanceTo(L.latLng(rt.coords[i + 1]));
+          }
+          const distKm = distMeters / 1000;
+          const estMin = Math.round((distKm / 18) * 60);
+
+          poly.bindPopup(`<strong>🌲 ${rt.name}</strong><br><span>${rt.meta}</span><br><small>Distancia aprox: ${distKm.toFixed(1)} km</small>`).openPopup();
+
+          setOriginPoint(rt.start[0], rt.start[1], `Inicio: ${rt.name}`);
+          setDestinationPoint(rt.end[0], rt.end[1], `Fin: ${rt.name}`);
+
+          document.getElementById('summaryDistance').textContent = `${distKm.toFixed(2)} km`;
+          document.getElementById('summaryDuration').textContent = `${estMin} min`;
+          document.getElementById('summarySafePct').textContent = '🟢 95% Senda / Vía Ciclista (GEOCyL)';
+          document.getElementById('summaryDangerPct').textContent = '🔴 5% Enlace urbano';
+          document.getElementById('barSafe').style.width = '95%';
+          document.getElementById('barOther').style.width = '0%';
+          document.getElementById('barDanger').style.width = '5%';
+          document.getElementById('routeSummary').classList.add('visible');
+
+          map.fitBounds(poly.getBounds(), { paddingTopLeft: [30, 180], paddingBottomRight: [30, 160] });
+          if (window.innerWidth < 640) {
+            topPanel.classList.add('collapsed');
+            togglePanelText.textContent = 'Controles';
+            togglePanelIcon.textContent = '▼';
+          }
+          showToast(`Trazado GEOCyL cargado: ${rt.name}`, 'success', 3000);
+        });
+
+        // Calcular por OpenRouteService usando inicio y fin de la ruta GEOCyL
+        card.querySelector('[data-action="route"]').addEventListener('click', () => {
+          setOriginPoint(rt.start[0], rt.start[1], `Inicio: ${rt.name}`);
+          setDestinationPoint(rt.end[0], rt.end[1], `Fin: ${rt.name}`);
+          document.querySelector('[data-tab="tabRoute"]').click();
+          calculateRoute();
+        });
+
+        geocylContainer.appendChild(card);
+      });
+    }
+
     // Limpiar ruta y marcadores
     document.getElementById('clearRouteBtn').addEventListener('click', () => {
       state.origin = null;
@@ -1355,6 +2508,7 @@
       }
 
       state.routeLayerGroup.clearLayers();
+      state.geocylRouteOverlay.clearLayers();
       document.getElementById('originInput').value = '';
       document.getElementById('destInput').value = '';
       document.getElementById('originCoordsLabel').textContent = '';
@@ -1371,7 +2525,6 @@
 
     document.getElementById('calcRouteBtn').addEventListener('click', calculateRoute);
 
-    // Permitir pulsar Enter en los inputs para lanzar el cálculo
     ['originInput', 'destInput'].forEach((id) => {
       document.getElementById(id).addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -1381,8 +2534,10 @@
       });
     });
 
-    // Inicializar estado de la API Key al arrancar
+    // Inicialización al arrancar la SPA
     updateApiKeyUI();
+    buildPresetRoutesCatalog();
+    loadGisavaOfficialCycleways();
   </script>
 </body>
 </html>
