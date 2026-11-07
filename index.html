@@ -627,6 +627,73 @@
       border-color: rgba(56, 189, 248, 0.5);
     }
 
+    /* Selector de Tipo de Ruta: Segura (Carril Bici) vs Más Rápida */
+    .route-mode-container {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .route-mode-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .route-mode-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .route-mode-btn {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid var(--border-color);
+      border-radius: 9px;
+      padding: 7px 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .route-mode-btn:active {
+      transform: scale(0.98);
+    }
+
+    .route-mode-btn.active {
+      background: rgba(14, 165, 233, 0.2);
+      border-color: #38bdf8;
+      color: #f8fafc;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+    }
+
+    .route-mode-title {
+      font-size: 0.76rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .route-mode-desc {
+      font-size: 0.64rem;
+      opacity: 0.8;
+      font-weight: 400;
+    }
+
     /* Catálogo de Rutas GEOCyL y Plano Ayuntamiento */
     .routes-section-title {
       font-size: 0.72rem;
@@ -1021,10 +1088,28 @@
           👆 Toca cualquier punto del mapa para fijar el <strong id="mapPickModeName">Origen (A)</strong>
         </div>
 
+        <!-- Selector de Tipo de Ruta: Priorizar Carril Bici vs Ruta Rápida -->
+        <div class="route-mode-container">
+          <div class="route-mode-header">
+            <span>⚙️ Tipo de cálculo</span>
+            <span id="routeModeDescBadge" style="color:#38bdf8;font-weight:600;">Máxima Seguridad</span>
+          </div>
+          <div class="route-mode-selector">
+            <button type="button" class="route-mode-btn active" id="btnModeSafe" data-mode="safe">
+              <span class="route-mode-title">🛡️ Carril Bici</span>
+              <span class="route-mode-desc">Prioriza vías seguras</span>
+            </button>
+            <button type="button" class="route-mode-btn" id="btnModeFast" data-mode="fast">
+              <span class="route-mode-title">⚡ Más Rápida</span>
+              <span class="route-mode-desc">Trayecto más directo</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Botones de Cálculo, Inversión y Limpieza -->
         <div class="actions-row">
           <button type="button" class="btn btn-primary" id="calcRouteBtn">
-            ⚡ Calcular ruta segura
+            ⚡ Calcular ruta
           </button>
           <button type="button" class="btn btn-swap" id="swapPointsBtn" title="Invertir Origen y Destino">
             ⇅
@@ -1396,6 +1481,7 @@
       origin: null,
       destination: null,
       pickMode: 'origin',
+      routeMode: 'safe', // 'safe' (Priorizar Carril Bici) o 'fast' (Más Rápida)
       originMarker: null,
       destMarker: null,
       baseTileLayer: null,
@@ -2386,9 +2472,24 @@
     }
 
     // Motor Ciclista Automático sin API Key (Valhalla OSM + Red Oficial GISAVA + Fallback OSRM)
-    async function calculateRouteKeyless(origin, destination) {
+    async function calculateRouteKeyless(origin, destination, mode = 'safe') {
       // 1. Valhalla OSM Bicycle Routing + Trace Attributes para clasificar cada tramo por waytype
       try {
+        const isSafe = mode === 'safe';
+        const bicycleOptions = isSafe
+          ? {
+              bicycle_type: 'Hybrid',
+              use_roads: 0.05,
+              use_tracks: 0.95,
+              use_hills: 0.2
+            }
+          : {
+              bicycle_type: 'Road',
+              use_roads: 0.85,
+              use_tracks: 0.1,
+              cycling_speed: 24.0
+            };
+
         const valhallaBody = {
           locations: [
             { lat: origin.lat, lon: origin.lon },
@@ -2396,11 +2497,7 @@
           ],
           costing: 'bicycle',
           costing_options: {
-            bicycle: {
-              bicycle_type: 'Hybrid',
-              use_roads: 0.15,
-              use_tracks: 0.9
-            }
+            bicycle: bicycleOptions
           },
           units: 'kilometers',
           language: 'es-ES'
@@ -2583,15 +2680,17 @@
         // Si el usuario configuró una ORS_API_KEY, usar OpenRouteService primero (y caer al motor gratuito si falla)
         if (apiKey) {
           try {
+            const orsProfile = state.routeMode === 'safe' ? 'cycling-regular' : 'cycling-road';
             const requestBody = {
               coordinates: [
                 [state.origin.lon, state.origin.lat],
                 [state.destination.lon, state.destination.lat]
               ],
+              preference: state.routeMode === 'safe' ? 'recommended' : 'fastest',
               extra_info: ['waytype']
             };
 
-            const response = await fetch('https://api.openrouteservice.org/v2/directions/cycling-regular/geojson', {
+            const response = await fetch(`https://api.openrouteservice.org/v2/directions/${orsProfile}/geojson`, {
               method: 'POST',
               headers: {
                 'Accept': 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8',
@@ -2619,7 +2718,7 @@
 
         // Si no hay ORS_API_KEY (por defecto) o si ORS dio error, usar motor ciclista gratuito (Valhalla + GISAVA)
         if (!usedOrs) {
-          const keylessResult = await calculateRouteKeyless(state.origin, state.destination);
+          const keylessResult = await calculateRouteKeyless(state.origin, state.destination, state.routeMode);
           coords = keylessResult.coords;
           waytypeValues = keylessResult.waytypeValues;
           waytypeSummary = keylessResult.waytypeSummary;
@@ -2836,6 +2935,43 @@
         geocylContainer.appendChild(card);
       });
     }
+
+    // Selector de modo de ruta (Segura / Carril Bici vs Más Rápida)
+    function setRouteMode(mode, recalculateIfActive = true) {
+      state.routeMode = mode;
+      const btnSafe = document.getElementById('btnModeSafe');
+      const btnFast = document.getElementById('btnModeFast');
+      const badge = document.getElementById('routeModeDescBadge');
+      const calcBtn = document.getElementById('calcRouteBtn');
+
+      if (mode === 'safe') {
+        btnSafe.classList.add('active');
+        btnFast.classList.remove('active');
+        if (badge) {
+          badge.textContent = 'Máxima Seguridad';
+          badge.style.color = '#38bdf8';
+        }
+        if (calcBtn) calcBtn.textContent = '🛡️ Calcular ruta en carril bici';
+        showToast('Modo: Priorizar carriles bici y vías seguras', 'info', 2200);
+      } else {
+        btnFast.classList.add('active');
+        btnSafe.classList.remove('active');
+        if (badge) {
+          badge.textContent = 'Más Rápida / Directa';
+          badge.style.color = '#fbbf24';
+        }
+        if (calcBtn) calcBtn.textContent = '⚡ Calcular ruta más rápida';
+        showToast('Modo: Ruta más directa y rápida', 'info', 2200);
+      }
+
+      // Si ya hay origen y destino fijados o ruta dibujada, recalcular automáticamente
+      if (recalculateIfActive && state.origin && state.destination && state.routeLayerGroup && state.routeLayerGroup.getLayers().length > 0) {
+        calculateRoute();
+      }
+    }
+
+    document.getElementById('btnModeSafe')?.addEventListener('click', () => setRouteMode('safe'));
+    document.getElementById('btnModeFast')?.addEventListener('click', () => setRouteMode('fast'));
 
     // Limpiar ruta y marcadores
     document.getElementById('clearRouteBtn').addEventListener('click', () => {
