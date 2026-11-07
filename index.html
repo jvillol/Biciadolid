@@ -455,6 +455,135 @@
       border-color: var(--primary);
     }
 
+    .btn-fav {
+      background: rgba(250, 204, 21, 0.14);
+      color: #fde047;
+      border: 1px solid rgba(250, 204, 21, 0.32);
+      padding: 7px 8px;
+    }
+
+    /* Barra de Sitios Guardados (Casa, Trabajo, Favoritos...) */
+    .saved-places-container {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid var(--border-color);
+      border-radius: 11px;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .saved-places-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.69rem;
+      font-weight: 700;
+      color: #fde047;
+    }
+
+    .saved-places-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .saved-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #f8fafc;
+      cursor: pointer;
+      transition: all 0.15s;
+      max-width: 100%;
+    }
+
+    .saved-chip:active {
+      transform: scale(0.96);
+    }
+
+    .saved-chip.empty-slot {
+      border-style: dashed;
+      border-color: rgba(250, 204, 21, 0.4);
+      color: #cbd5e1;
+      background: rgba(30, 41, 59, 0.5);
+    }
+
+    .saved-chip-main {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .saved-chip-act {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.62rem;
+      padding: 1px 4px;
+      border-radius: 999px;
+      background: rgba(14, 165, 233, 0.25);
+      color: #7dd3fc;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      margin-left: 2px;
+    }
+
+    .saved-chip-del {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.68rem;
+      color: #94a3b8;
+      padding: 0 2px;
+      margin-left: 1px;
+    }
+
+    .saved-chip-del:hover {
+      color: #f87171;
+    }
+
+    .save-place-drawer {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed rgba(148, 163, 184, 0.25);
+    }
+
+    .save-place-drawer.visible {
+      display: flex;
+    }
+
+    .icon-picker-row {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .icon-opt-btn {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid var(--border-color);
+      border-radius: 7px;
+      padding: 3px 7px;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+
+    .icon-opt-btn.active {
+      border-color: #fde047;
+      background: rgba(250, 204, 21, 0.2);
+    }
+
     .actions-row {
       display: grid;
       grid-template-columns: 1fr auto auto;
@@ -1113,7 +1242,7 @@
         <!-- Selección de Origen -->
         <div class="input-group">
           <div class="input-label">
-            <span>🟢 Punto de Origen (Calle, Barrio o BIKI)</span>
+            <span>🟢 Punto de Origen (Calle, Casa, Trabajo o BIKI)</span>
             <span id="originCoordsLabel"></span>
           </div>
           <div class="input-row">
@@ -1121,14 +1250,17 @@
               type="text"
               id="originInput"
               class="text-input"
-              placeholder="Ej: Plaza Mayor, Parquesol, Calle Santiago..."
+              placeholder="Ej: Casa, Plaza Mayor, Parquesol..."
               autocomplete="off"
             />
             <button type="button" class="btn btn-gps" id="gpsBtn" title="Obtener ubicación actual">
-              📍 Usar mi GPS
+              📍 GPS
             </button>
             <button type="button" class="btn btn-pick" id="pickOriginBtn" title="Tocar en el mapa para elegir Origen">
               🎯
+            </button>
+            <button type="button" class="btn btn-fav" id="saveOriginFavBtn" title="Guardar este Origen en Mis Sitios (Casa, Trabajo...)">
+              ⭐
             </button>
           </div>
           <div class="suggestions-list" id="originSuggestions"></div>
@@ -1137,7 +1269,7 @@
         <!-- Selección de Destino -->
         <div class="input-group">
           <div class="input-label">
-            <span>🔴 Punto de Destino (Calle, Barrio o Lugar)</span>
+            <span>🔴 Punto de Destino (Calle, Casa, Trabajo o Lugar)</span>
             <span id="destCoordsLabel"></span>
           </div>
           <div class="input-row">
@@ -1145,14 +1277,50 @@
               type="text"
               id="destInput"
               class="text-input"
-              placeholder="Ej: Paseo de Zorrilla, Campus Delibes..."
+              placeholder="Ej: Trabajo, Paseo de Zorrilla, Campus..."
               autocomplete="off"
             />
             <button type="button" class="btn btn-pick" id="pickDestBtn" title="Tocar en el mapa para elegir Destino">
               🎯
             </button>
+            <button type="button" class="btn btn-fav" id="saveDestFavBtn" title="Guardar este Destino en Mis Sitios (Casa, Trabajo...)">
+              ⭐
+            </button>
           </div>
           <div class="suggestions-list" id="destSuggestions"></div>
+        </div>
+
+        <!-- Mis Sitios Guardados (Casa, Trabajo y Favoritos personalizados) -->
+        <div class="saved-places-container">
+          <div class="saved-places-header">
+            <span>⭐ Mis Sitios Guardados (Toca para ir)</span>
+            <button type="button" id="toggleSaveDrawerBtn" style="background:rgba(250,204,21,0.16);border:1px solid rgba(250,204,21,0.35);color:#fde047;border-radius:6px;padding:2px 7px;font-size:0.66rem;font-weight:600;cursor:pointer;">+ Guardar sitio</button>
+          </div>
+          <div class="saved-places-chips" id="savedPlacesList"></div>
+
+          <!-- Formulario desplegable para guardar Casa, Trabajo u otro destino exacto -->
+          <div class="save-place-drawer" id="savePlaceDrawer">
+            <div style="font-size:0.7rem;color:#e2e8f0;font-weight:600;">Guardar ubicación exacta:</div>
+            <div class="icon-picker-row" id="favIconPicker">
+              <button type="button" class="icon-opt-btn active" data-icon="🏠" data-preset="Casa">🏠 Casa</button>
+              <button type="button" class="icon-opt-btn" data-icon="💼" data-preset="Trabajo">💼 Trabajo</button>
+              <button type="button" class="icon-opt-btn" data-icon="🎓" data-preset="Estudios">🎓 Estudios</button>
+              <button type="button" class="icon-opt-btn" data-icon="🏋️" data-preset="Gimnasio">🏋️ Gym</button>
+              <button type="button" class="icon-opt-btn" data-icon="🛒" data-preset="Compras">🛒 Súper</button>
+              <button type="button" class="icon-opt-btn" data-icon="📍" data-preset="">📍 Otro</button>
+            </div>
+            <div class="input-row">
+              <input type="text" id="favNameInput" class="text-input" placeholder="Nombre (ej: Casa, Trabajo...)" value="Casa" style="flex:0.85;" />
+              <input type="text" id="favAddressInput" class="text-input" placeholder="Calle y nº, o toca el mapa / usa Destino" style="flex:1.15;" />
+            </div>
+            <div style="display:flex;gap:5px;justify-content:space-between;align-items:center;">
+              <span id="favSourceHint" style="font-size:0.65rem;color:#94a3b8;">Puedes escribir dirección o usar un punto ya marcado</span>
+              <div style="display:flex;gap:4px;">
+                <button type="button" class="btn-mini" id="cancelSavePlaceBtn" style="border-color:rgba(148,163,184,0.3);color:#cbd5e1;background:transparent;">Cancelar</button>
+                <button type="button" class="btn-mini green" id="confirmSavePlaceBtn">💾 Guardar</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Banner informativo para selección en el mapa -->
@@ -1581,7 +1749,7 @@
       origin: null,
       destination: null,
       pickMode: 'origin',
-      routeMode: 'safe', // 'safe' (Priorizar Carril Bici) o 'fast' (Más Rápida)
+      routeMode: 'safe', // 'safe', 'ciclo30' o 'fast'
       originMarker: null,
       destMarker: null,
       baseTileLayer: null,
@@ -1593,12 +1761,14 @@
       aparcabicisLayer: null,
       geocylProjectedLayer: null,
       geocylRouteOverlay: null,
+      savedPlacesLayer: null,
       cyclewaysLoaded: false,
       gisavaCyclewaysLoaded: false,
       bikiLoaded: false,
       parkibiciLoaded: false,
       aparcabicisLoaded: false,
       geocylProjectedLoaded: false,
+      pendingFavCoords: null,
       customApiKey: localStorage.getItem('biciadolid_ors_key') || ''
     };
 
@@ -1685,6 +1855,7 @@
     state.aparcabicisLayer = L.layerGroup();
     state.parkibiciLayer = L.layerGroup();
     state.bikiLayer = L.layerGroup();
+    state.savedPlacesLayer = L.layerGroup().addTo(map);
     state.routeLayerGroup = L.layerGroup().addTo(map);
 
     // Cambiar mapa base desde la pestaña
@@ -2259,6 +2430,17 @@
       const { lat, lng } = e.latlng;
       const coordText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 
+      const saveDrawer = document.getElementById('savePlaceDrawer');
+      if (saveDrawer && saveDrawer.classList.contains('visible')) {
+        state.pendingFavCoords = { lat, lon: lng, label: coordText };
+        document.getElementById('favAddressInput').value = coordText;
+        const hint = document.getElementById('favSourceHint');
+        if (hint) {
+          hint.textContent = `📍 Punto del mapa listo para guardar (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+          hint.style.color = '#4ade80';
+        }
+      }
+
       if (!state.origin || state.pickMode === 'origin') {
         setOriginPoint(lat, lng, coordText);
         updatePickModeUI('destination');
@@ -2335,9 +2517,319 @@
       return null;
     }
 
+    /*************************************************************************
+     * 3B. GESTIÓN DE SITIOS GUARDADOS ("CASA", "TRABAJO", FAVORITOS...)
+     *************************************************************************/
+    const SAVED_PLACES_KEY = 'biciadolid_saved_places';
+
+    function getSavedPlaces() {
+      try {
+        const raw = localStorage.getItem(SAVED_PLACES_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function savePlacesToStorage(places) {
+      try {
+        localStorage.setItem(SAVED_PLACES_KEY, JSON.stringify(places));
+      } catch (_) {}
+    }
+
+    function renderSavedPlacesMarkers(places) {
+      if (!state.savedPlacesLayer) return;
+      state.savedPlacesLayer.clearLayers();
+
+      places.forEach((p) => {
+        const icon = L.divIcon({
+          className: '',
+          html: `<div class="poi-badge" style="background:#1e293b;border-color:#fde047;width:26px;height:26px;font-size:0.85rem;">${p.icon || '⭐'}</div>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13]
+        });
+
+        const safeLabel = `${p.icon || '⭐'} ${p.name} (${p.address || ''})`.replace(/'/g, "\\'");
+        L.marker([p.lat, p.lon], { icon })
+          .bindPopup(`
+            <div style="font-size:0.8rem;min-width:185px;">
+              <strong>${p.icon || '⭐'} ${p.name}</strong><br>
+              <span style="color:#64748b;">📍 ${p.address || `${p.lat.toFixed(4)}, ${p.lon.toFixed(4)}`}</span>
+              <div class="popup-btn-group">
+                <button class="popup-btn origin" onclick="setPointFromPopup('origin', ${p.lat}, ${p.lon}, '${safeLabel}')">Salir de aquí (A)</button>
+                <button class="popup-btn dest" onclick="setPointFromPopup('dest', ${p.lat}, ${p.lon}, '${safeLabel}')">Ir aquí (B)</button>
+              </div>
+            </div>
+          `)
+          .addTo(state.savedPlacesLayer);
+      });
+    }
+
+    function renderSavedPlacesUI() {
+      const container = document.getElementById('savedPlacesList');
+      if (!container) return;
+
+      const places = getSavedPlaces();
+      renderSavedPlacesMarkers(places);
+      container.innerHTML = '';
+
+      // Asegurar que siempre aparezcan accesos directos para "Casa" y "Trabajo" aunque aún no estén configurados
+      const defaultSlots = [
+        { name: 'Casa', icon: '🏠' },
+        { name: 'Trabajo', icon: '💼' }
+      ];
+
+      defaultSlots.forEach((slot) => {
+        const existing = places.find((p) => p.name.toLowerCase() === slot.name.toLowerCase());
+        if (!existing) {
+          const emptyChip = document.createElement('div');
+          emptyChip.className = 'saved-chip empty-slot';
+          emptyChip.title = `Configurar ubicación exacta de ${slot.name}`;
+          emptyChip.innerHTML = `<span>${slot.icon} ${slot.name} <small style="opacity:0.75;">(Guardar)</small></span>`;
+          emptyChip.addEventListener('click', () => {
+            openSavePlaceDrawer({
+              name: slot.name,
+              icon: slot.icon,
+              sourcePoint: state.destination || state.origin || null
+            });
+          });
+          container.appendChild(emptyChip);
+        }
+      });
+
+      // Renderizar todos los sitios guardados
+      places.forEach((p) => {
+        const chip = document.createElement('div');
+        chip.className = 'saved-chip';
+        chip.title = `${p.name}: ${p.address} (Toca para ir como Destino, o pulsa A para Origen)`;
+        chip.innerHTML = `
+          <span class="saved-chip-main" data-role="dest">${p.icon || '⭐'} ${p.name}</span>
+          <span class="saved-chip-act" data-role="origin" title="Usar como Punto de Origen (A)">A</span>
+          <span class="saved-chip-del" data-role="delete" title="Borrar o cambiar ubicación">&times;</span>
+        `;
+
+        // Tocar el nombre -> Fijar como Destino (y si ya hay Origen, calcular ruta automáticamente)
+        chip.querySelector('[data-role="dest"]').addEventListener('click', (e) => {
+          e.stopPropagation();
+          const fullLabel = `${p.icon || '⭐'} ${p.name} (${p.address})`;
+          setDestinationPoint(p.lat, p.lon, fullLabel);
+          map.setView([p.lat, p.lon], 15);
+          if (state.origin) {
+            calculateRoute();
+          } else {
+            showToast(`Destino fijado en ${p.icon || ''} ${p.name}. Selecciona tu Origen o pulsa GPS.`, 'success', 2600);
+          }
+        });
+
+        // Tocar la "A" -> Fijar como Origen
+        chip.querySelector('[data-role="origin"]').addEventListener('click', (e) => {
+          e.stopPropagation();
+          const fullLabel = `${p.icon || '⭐'} ${p.name} (${p.address})`;
+          setOriginPoint(p.lat, p.lon, fullLabel);
+          map.setView([p.lat, p.lon], 15);
+          showToast(`Origen (A) fijado en ${p.icon || ''} ${p.name}.`, 'info', 2200);
+          if (state.destination) {
+            calculateRoute();
+          }
+        });
+
+        // Tocar "×" -> Eliminar sitio guardado
+        chip.querySelector('[data-role="delete"]').addEventListener('click', (e) => {
+          e.stopPropagation();
+          const updated = getSavedPlaces().filter((item) => item.id !== p.id);
+          savePlacesToStorage(updated);
+          renderSavedPlacesUI();
+          showToast(`Sitio "${p.name}" eliminado. Puedes guardar una nueva ubicación.`, 'info', 2200);
+        });
+
+        container.appendChild(chip);
+      });
+    }
+
+    function openSavePlaceDrawer({ name = 'Casa', icon = '🏠', sourcePoint = null } = {}) {
+      const drawer = document.getElementById('savePlaceDrawer');
+      const nameInput = document.getElementById('favNameInput');
+      const addrInput = document.getElementById('favAddressInput');
+      const hint = document.getElementById('favSourceHint');
+
+      drawer.classList.add('visible');
+      nameInput.value = name;
+
+      // Marcar icono activo
+      document.querySelectorAll('#favIconPicker .icon-opt-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.icon === icon);
+      });
+
+      if (sourcePoint && typeof sourcePoint.lat === 'number') {
+        state.pendingFavCoords = {
+          lat: sourcePoint.lat,
+          lon: sourcePoint.lon,
+          label: sourcePoint.label || `${sourcePoint.lat.toFixed(5)}, ${sourcePoint.lon.toFixed(5)}`
+        };
+        addrInput.value = state.pendingFavCoords.label;
+        hint.textContent = `📍 Coordenadas listas (${sourcePoint.lat.toFixed(4)}, ${sourcePoint.lon.toFixed(4)})`;
+        hint.style.color = '#4ade80';
+      } else {
+        state.pendingFavCoords = null;
+        addrInput.value = '';
+        hint.textContent = 'Escribe la calle y nº, o selecciona primero en el mapa';
+        hint.style.color = '#94a3b8';
+        addrInput.focus();
+      }
+    }
+
+    document.getElementById('toggleSaveDrawerBtn')?.addEventListener('click', () => {
+      const drawer = document.getElementById('savePlaceDrawer');
+      if (drawer.classList.contains('visible')) {
+        drawer.classList.remove('visible');
+      } else {
+        openSavePlaceDrawer({
+          name: 'Casa',
+          icon: '🏠',
+          sourcePoint: state.destination || state.origin || null
+        });
+      }
+    });
+
+    document.getElementById('cancelSavePlaceBtn')?.addEventListener('click', () => {
+      document.getElementById('savePlaceDrawer')?.classList.remove('visible');
+    });
+
+    document.querySelectorAll('#favIconPicker .icon-opt-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#favIconPicker .icon-opt-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (btn.dataset.preset) {
+          document.getElementById('favNameInput').value = btn.dataset.preset;
+        } else {
+          document.getElementById('favNameInput').value = '';
+          document.getElementById('favNameInput').focus();
+        }
+      });
+    });
+
+    // Si el usuario edita manualmente el campo de dirección del favorito, limpiar coordenadas previas para geocodificar lo nuevo
+    document.getElementById('favAddressInput')?.addEventListener('input', () => {
+      state.pendingFavCoords = null;
+      const hint = document.getElementById('favSourceHint');
+      if (hint) {
+        hint.textContent = 'Se buscará esta dirección exacta al pulsar Guardar';
+        hint.style.color = '#38bdf8';
+      }
+    });
+
+    // Botones ⭐ junto a Origen y Destino para guardar directamente ese punto
+    document.getElementById('saveOriginFavBtn')?.addEventListener('click', async () => {
+      const txt = document.getElementById('originInput').value.trim();
+      if (!state.origin && txt) {
+        const geo = await geocodeStreetInValladolid(txt);
+        if (geo) setOriginPoint(geo.lat, geo.lon, geo.display_name);
+      }
+      if (!state.origin) {
+        showToast('Primero selecciona o escribe un Punto de Origen para guardarlo.', 'info');
+        return;
+      }
+      const existing = getSavedPlaces();
+      const hasCasa = existing.some((p) => p.name.toLowerCase() === 'casa');
+      openSavePlaceDrawer({
+        name: hasCasa ? 'Trabajo' : 'Casa',
+        icon: hasCasa ? '💼' : '🏠',
+        sourcePoint: state.origin
+      });
+    });
+
+    document.getElementById('saveDestFavBtn')?.addEventListener('click', async () => {
+      const txt = document.getElementById('destInput').value.trim();
+      if (!state.destination && txt) {
+        const geo = await geocodeStreetInValladolid(txt);
+        if (geo) setDestinationPoint(geo.lat, geo.lon, geo.display_name);
+      }
+      if (!state.destination) {
+        showToast('Primero selecciona o escribe un Punto de Destino para guardarlo.', 'info');
+        return;
+      }
+      const existing = getSavedPlaces();
+      const hasCasa = existing.some((p) => p.name.toLowerCase() === 'casa');
+      openSavePlaceDrawer({
+        name: hasCasa ? 'Trabajo' : 'Casa',
+        icon: hasCasa ? '💼' : '🏠',
+        sourcePoint: state.destination
+      });
+    });
+
+    // Confirmar guardado de sitio (Casa, Trabajo, etc.)
+    document.getElementById('confirmSavePlaceBtn')?.addEventListener('click', async () => {
+      const nameVal = document.getElementById('favNameInput').value.trim() || 'Favorito';
+      const addrVal = document.getElementById('favAddressInput').value.trim();
+      const activeIconBtn = document.querySelector('#favIconPicker .icon-opt-btn.active');
+      const iconVal = activeIconBtn ? activeIconBtn.dataset.icon : '⭐';
+
+      let targetLat = state.pendingFavCoords?.lat;
+      let targetLon = state.pendingFavCoords?.lon;
+      let targetAddress = addrVal || state.pendingFavCoords?.label || '';
+
+      if (typeof targetLat !== 'number' || typeof targetLon !== 'number') {
+        if (!addrVal) {
+          showToast('Escribe una dirección (ej: Calle Santiago 10) o selecciona primero un punto en el mapa.', 'error');
+          return;
+        }
+        const geo = await geocodeStreetInValladolid(addrVal);
+        if (!geo) {
+          showToast(`No pudimos localizar "${addrVal}". Prueba con calle y municipio o toca el mapa.`, 'error');
+          return;
+        }
+        targetLat = geo.lat;
+        targetLon = geo.lon;
+        targetAddress = geo.display_name;
+      }
+
+      const places = getSavedPlaces();
+      const existingIdx = places.findIndex((p) => p.name.toLowerCase() === nameVal.toLowerCase());
+      const newEntry = {
+        id: existingIdx >= 0 ? places[existingIdx].id : ('fav_' + Date.now()),
+        name: nameVal,
+        icon: iconVal,
+        address: targetAddress,
+        lat: Number(targetLat),
+        lon: Number(targetLon)
+      };
+
+      if (existingIdx >= 0) {
+        places[existingIdx] = newEntry;
+      } else {
+        places.push(newEntry);
+      }
+
+      savePlacesToStorage(places);
+      renderSavedPlacesUI();
+      document.getElementById('savePlaceDrawer')?.classList.remove('visible');
+      map.setView([newEntry.lat, newEntry.lon], 15);
+      showToast(`${newEntry.icon} "${newEntry.name}" guardado en ${newEntry.address}.`, 'success', 3200);
+    });
+
     async function searchGisavaOfficialSuggestions(queryText) {
       const raw = queryText.trim();
-      if (raw.length < 3) return [];
+      if (raw.length < 2) return [];
+
+      const items = [];
+
+      // 0. Buscar primero en Mis Sitios Guardados (ej: "casa", "trabajo"...)
+      const savedMatches = getSavedPlaces().filter(
+        (p) =>
+          p.name.toLowerCase().includes(raw.toLowerCase()) ||
+          (p.address && p.address.toLowerCase().includes(raw.toLowerCase()))
+      );
+      savedMatches.forEach((p) => {
+        items.push({
+          label: `${p.icon || '⭐'} ${p.name} (${p.address})`,
+          badge: '⭐ Guardado',
+          lat: p.lat,
+          lon: p.lon
+        });
+      });
+
+      if (raw.length < 3) return items;
 
       // Limpiar números de portal y sufijos de barrio para buscar también en el callejero oficial GISAVA
       const streetPart = raw
@@ -2351,8 +2843,6 @@
         .replace(/[\u0300-\u036f]/g, '')
         .toUpperCase()
         .replace(/'/g, '');
-
-      const items = [];
 
       try {
         const whereStreets = encodeURIComponent(`UPPER(DESCNORMAL) LIKE '%${cleanGisava}%' OR UPPER(DESCUSUARIO) LIKE '%${cleanGisava}%'`);
@@ -2400,7 +2890,7 @@
             });
           });
         }
-        return items.slice(0, 7);
+        return items.slice(0, 8);
       } catch (_) {
         return items;
       }
@@ -2414,7 +2904,7 @@
       inputEl.addEventListener('input', () => {
         clearTimeout(debounceTimer);
         const val = inputEl.value.trim();
-        if (val.length < 3) {
+        if (val.length < 2) {
           listEl.classList.remove('visible');
           return;
         }
@@ -2438,7 +2928,7 @@
             listEl.appendChild(row);
           });
           listEl.classList.add('visible');
-        }, 260);
+        }, 240);
       });
 
       document.addEventListener('click', (e) => {
@@ -2450,11 +2940,34 @@
 
     setupAutocomplete('originInput', 'originSuggestions', setOriginPoint);
     setupAutocomplete('destInput', 'destSuggestions', setDestinationPoint);
+    setupAutocomplete('favAddressInput', 'destSuggestions', (lat, lon, label) => {
+      state.pendingFavCoords = { lat, lon, label };
+      document.getElementById('favAddressInput').value = label;
+      const hint = document.getElementById('favSourceHint');
+      if (hint) {
+        hint.textContent = `📍 Dirección seleccionada (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+        hint.style.color = '#4ade80';
+      }
+    });
 
-    // Geocodificación inteligente: Nominatim (Valladolid + ubicaciones lejanas) + Callejero Oficial GISAVA
+    // Geocodificación inteligente: Sitios Guardados + Nominatim (Valladolid + ubicaciones lejanas) + Callejero Oficial GISAVA
     async function geocodeStreetInValladolid(queryText) {
       const cleanQuery = queryText.trim();
       if (!cleanQuery) return null;
+
+      // 0. Comprobar primero si coincide con un Sitio Guardado ("Casa", "Trabajo", etc.)
+      const savedPlace = getSavedPlaces().find(
+        (p) =>
+          p.name.toLowerCase() === cleanQuery.toLowerCase() ||
+          `${p.icon || '⭐'} ${p.name} (${p.address})`.toLowerCase() === cleanQuery.toLowerCase()
+      );
+      if (savedPlace) {
+        return {
+          lat: savedPlace.lat,
+          lon: savedPlace.lon,
+          display_name: `${savedPlace.icon || '⭐'} ${savedPlace.name} (${savedPlace.address})`
+        };
+      }
 
       const coordMatch = cleanQuery.match(/^(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)$/);
       if (coordMatch) {
@@ -3243,6 +3756,8 @@
 
     // Inicialización al arrancar la SPA
     updateApiKeyUI();
+    updateCalcButtonLabel(state.routeMode);
+    renderSavedPlacesUI();
     buildPresetRoutesCatalog();
     loadGisavaOfficialCycleways();
 
