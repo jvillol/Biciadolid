@@ -756,6 +756,96 @@
       border-color: rgba(56, 189, 248, 0.5);
     }
 
+    /* Selector de Vehículo (Patinete VMP vs Bicicleta) según Ordenanza Valladolid */
+    .vehicle-selector-container {
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 12px;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .vehicle-selector-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.69rem;
+      font-weight: 700;
+      color: #7dd3fc;
+    }
+
+    .vehicle-selector-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .vehicle-btn {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid var(--border-color);
+      border-radius: 9px;
+      padding: 7px 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      text-align: left;
+    }
+
+    .vehicle-btn:active {
+      transform: scale(0.98);
+    }
+
+    .vehicle-btn.active {
+      background: rgba(14, 165, 233, 0.22);
+      border-color: #38bdf8;
+      color: #f8fafc;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.28);
+    }
+
+    .vehicle-icon {
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+
+    .vehicle-texts {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .vehicle-title {
+      font-size: 0.74rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .vehicle-sub {
+      font-size: 0.58rem;
+      opacity: 0.85;
+      line-height: 1.15;
+    }
+
+    .ordinance-alert-box {
+      font-size: 0.62rem;
+      border-radius: 7px;
+      padding: 4px 7px;
+      line-height: 1.25;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      background: rgba(239, 68, 68, 0.12);
+      color: #fca5a5;
+    }
+
+    .ordinance-alert-box.bike {
+      border-color: rgba(56, 189, 248, 0.35);
+      background: rgba(14, 165, 233, 0.12);
+      color: #bae6fd;
+    }
+
     /* Selector de Tipo de Ruta: Segura (Carril Bici) vs Ciclocarril 30 vs Más Rápida */
     .route-mode-container {
       background: rgba(15, 23, 42, 0.65);
@@ -1587,6 +1677,33 @@
           👆 Toca cualquier punto del mapa para fijar el <strong id="mapPickModeName">Origen (A)</strong>
         </div>
 
+        <!-- Selector de Vehículo (Patinete VMP vs Bicicleta) según Ordenanza Valladolid -->
+        <div class="vehicle-selector-container">
+          <div class="vehicle-selector-header">
+            <span>🛴/🚲 Tipo de vehículo (Ordenanza Valladolid)</span>
+            <span id="vehicleRuleBadge" style="color:#fde047;font-size:0.62rem;font-weight:600;">Reglas VMP activas</span>
+          </div>
+          <div class="vehicle-selector-grid">
+            <button type="button" class="vehicle-btn active" id="btnVehicleScooter" data-vehicle="scooter">
+              <span class="vehicle-icon">🛴</span>
+              <div class="vehicle-texts">
+                <span class="vehicle-title">Patinete Eléctrico (VMP)</span>
+                <span class="vehicle-sub">Túneles, aceras y parques vetados</span>
+              </div>
+            </button>
+            <button type="button" class="vehicle-btn" id="btnVehicleBicycle" data-vehicle="bicycle">
+              <span class="vehicle-icon">🚲</span>
+              <div class="vehicle-texts">
+                <span class="vehicle-title">Bicicleta / Ciclo</span>
+                <span class="vehicle-sub">Permitido en túneles con luz y sendas</span>
+              </div>
+            </button>
+          </div>
+          <div class="ordinance-alert-box" id="ordinanceNoticeBox">
+            ⚠️ <strong>Patinetes (VMP):</strong> Prohibido túneles (Labradores, etc.), aceras, carriles bus y parques. Obligatorio casco y seguro. Si hay acera o zona peatonal, ¡desmontar y a pie!
+          </div>
+        </div>
+
         <!-- Selector de Tipo de Ruta: Mejor/Segura vs Ciclocarril 30 vs Más Rápida -->
         <div class="route-mode-container">
           <div class="route-mode-header">
@@ -1667,6 +1784,23 @@
             <div class="sublegend-item"><span class="swatch-line" style="background: var(--gisava-comp1);"></span>Compartido 1 sentido</div>
             <div class="sublegend-item"><span class="swatch-dashed" style="border-color: var(--gisava-ciclo);"></span>Ciclocarril 30 km/h</div>
             <div class="sublegend-item"><span class="swatch-dashed" style="border-color: var(--gisava-alfoz);"></span>Otros Municipios</div>
+          </div>
+        </div>
+
+        <!-- Capa 1B: Zonas y Túneles Prohibidos (Ordenanza Valladolid VMP y Ciclos) -->
+        <div class="layer-card" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.08);">
+          <div class="layer-row">
+            <label class="layer-info" for="prohibitedZonesToggle">
+              <span style="font-size:1.1rem;">🚫</span>
+              <div>
+                <div style="color:#fca5a5; font-weight:700;">Zonas y Túneles Prohibidos</div>
+                <div class="layer-sub">Túneles (Labradores, etc.), parques (Campo Grande) y autovías</div>
+              </div>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="prohibitedZonesToggle" checked />
+              <span class="slider" style="background-color:rgba(239,68,68,0.5);"></span>
+            </label>
           </div>
         </div>
 
@@ -1890,9 +2024,13 @@
         <span class="legend-swatch" style="background: #e74c3c;"></span>
         <span>3º Carretera</span>
       </div>
-      <div class="legend-item" title="4ª Prioridad (Última opción): Acera peatonal">
-        <span class="legend-swatch" style="background: #f39c12;"></span>
-        <span>4º Acera</span>
+      <div class="legend-item" title="Tramo peatonal / Acera: En patinete o bici prohibido circular montado (ir a pie)">
+        <span class="legend-swatch" style="background: #f39c12; border: 1.5px dashed #fff;"></span>
+        <span id="legendWalkLabel">🚶 A pie (Acera/Peatonal)</span>
+      </div>
+      <div class="legend-item" title="Zonas expresamente prohibidas por la Ordenanza (Túneles, Autovías, Carril Bus)">
+        <span class="legend-swatch" style="background: #b91c1c; border-bottom: 2.5px solid #000;"></span>
+        <span>🚫 Vía Prohibida</span>
       </div>
     </div>
 
@@ -2055,8 +2193,140 @@
       [[41.62652,-4.69935],[41.6261,-4.69965],[41.62452,-4.69845],[41.62286,-4.69708],[41.62129,-4.69581],[41.62093,-4.69533]]
     ];
 
+    // Zonas y Túneles prohibidos según la Ordenanza de Valladolid (VMP y Ciclos)
+    const PROHIBITED_VALLADOLID_AREAS = [
+      {
+        id: 'tunel_labradores',
+        name: 'Túnel de Labradores',
+        type: 'tunnel',
+        scope: 'scooter_strict', // Prohibido patinetes (VMP), bicis con precaución
+        desc: 'Prohibida la circulación de patinetes (VMP). Bicis solo con alumbrado reglamentario y paso peatonal a pie.',
+        center: [41.6445, -4.7210],
+        polygon: [
+          [41.6455, -4.7222],
+          [41.6452, -4.7200],
+          [41.6436, -4.7198],
+          [41.6439, -4.7220]
+        ]
+      },
+      {
+        id: 'tunel_panaderos',
+        name: 'Túnel de Panaderos',
+        type: 'tunnel',
+        scope: 'scooter_strict',
+        desc: 'Paso inferior rodado prohibido para patinetes (VMP). Los ciclistas deben usar el paso habilitado.',
+        center: [41.6465, -4.7210],
+        polygon: [
+          [41.6474, -4.7224],
+          [41.6471, -4.7198],
+          [41.6456, -4.7196],
+          [41.6459, -4.7222]
+        ]
+      },
+      {
+        id: 'tunel_andromeda',
+        name: 'Paso inferior Andrómeda / Nochevieja',
+        type: 'tunnel',
+        scope: 'scooter_strict',
+        desc: 'Túnel bajo el ferrocarril prohibido para patinetes VMP.',
+        center: [41.6621, -4.7135],
+        polygon: [
+          [41.6630, -4.7148],
+          [41.6630, -4.7122],
+          [41.6612, -4.7122],
+          [41.6612, -4.7148]
+        ]
+      },
+      {
+        id: 'tunel_san_agustin',
+        name: 'Paso deprimido Glorieta San Agustín / N-601',
+        type: 'tunnel',
+        scope: 'all_strict', // Prohibido VMP y bicis (calzada rápida / túnel)
+        desc: 'Vía interurbana y paso deprimido prohibido para patinetes (VMP).',
+        center: [41.6180, -4.7195],
+        polygon: [
+          [41.6195, -4.7215],
+          [41.6195, -4.7175],
+          [41.6165, -4.7175],
+          [41.6165, -4.7215]
+        ]
+      },
+      {
+        id: 'parque_campo_grande',
+        name: 'Parque del Campo Grande',
+        type: 'park',
+        scope: 'scooter_strict',
+        desc: 'Prohibida la circulación de patinetes en el interior de parques. Debes desmontar y cruzar a pie.',
+        center: [41.6458, -4.7308],
+        polygon: [
+          [41.6488, -4.7297],
+          [41.6450, -4.7275],
+          [41.6418, -4.7315],
+          [41.6442, -4.7335],
+          [41.6475, -4.7318]
+        ]
+      },
+      {
+        id: 'parque_moreras',
+        name: 'Parque de las Moreras (Paseo Interior Peatonal)',
+        type: 'park',
+        scope: 'pedestrian_walk',
+        desc: 'Paseo interior peatonal. Si vas por la acera o jardines interiores, debes circular a pie.',
+        center: [41.6572, -4.7331],
+        polygon: [
+          [41.6592, -4.7348],
+          [41.6592, -4.7315],
+          [41.6552, -4.7315],
+          [41.6552, -4.7348]
+        ]
+      },
+      {
+        id: 'calle_santiago',
+        name: 'Calle Santiago (Eje Peatonal Central)',
+        type: 'pedestrian',
+        scope: 'pedestrian_walk',
+        desc: 'Zona peatonal: patinetes prohibidos montados. En bicicleta prohibido circular de 7:30 a 11:00 (carga y descarga); el resto del día prioridad peatonal estricta a paso de hombre.',
+        center: [41.6508, -4.7275],
+        polygon: [
+          [41.6520, -4.7285],
+          [41.6520, -4.7265],
+          [41.6496, -4.7265],
+          [41.6496, -4.7285]
+        ]
+      },
+      {
+        id: 'autovia_va30_sur',
+        name: 'Autovía de Circunvalación VA-30 (Sur)',
+        type: 'highway',
+        scope: 'all_strict',
+        desc: 'Autovía interurbana. Prohibida terminantemente la circulación de patinetes VMP y ciclos.',
+        center: [41.6050, -4.7050],
+        polygon: [
+          [41.6080, -4.7120],
+          [41.6080, -4.6980],
+          [41.6020, -4.6980],
+          [41.6020, -4.7120]
+        ]
+      },
+      {
+        id: 'autovia_a62_oeste',
+        name: 'Autovía de Castilla A-62 (Oeste)',
+        type: 'highway',
+        scope: 'all_strict',
+        desc: 'Autovía estatal interurbana. Prohibida totalmente la circulación de patinetes VMP.',
+        center: [41.6620, -4.7600],
+        polygon: [
+          [41.6700, -4.7680],
+          [41.6700, -4.7520],
+          [41.6540, -4.7520],
+          [41.6540, -4.7680]
+        ]
+      }
+    ];
+
     // Estado de la aplicación
     const state = {
+      vehicleType: 'scooter', // 'scooter' (Patinete VMP) o 'bicycle' (Bicicleta)
       origin: null,
       destination: null,
       pickMode: 'origin',
@@ -2067,6 +2337,7 @@
       routeLayerGroup: null,
       cyclewaysLayerGroup: null,
       gisavaCyclewaysLayer: null,
+      prohibitedZonesLayer: null,
       bikiLayer: null,
       parkibiciLayer: null,
       aparcabicisLayer: null,
@@ -2160,6 +2431,7 @@
 
     // Grupos de capas ordenados
     state.gisavaCyclewaysLayer = L.layerGroup().addTo(map);
+    state.prohibitedZonesLayer = L.layerGroup().addTo(map);
     state.cyclewaysLayerGroup = L.layerGroup();
     state.geocylProjectedLayer = L.layerGroup();
     state.geocylRouteOverlay = L.layerGroup().addTo(map);
@@ -3331,25 +3603,131 @@
       return null;
     }
 
+    // Comprueba si un punto [lat, lon] cae dentro de alguna zona prohibida según la Ordenanza
+    function pointInPolygon(lat, lon, poly) {
+      let inside = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const xi = poly[i][0], yi = poly[i][1];
+        const xj = poly[j][0], yj = poly[j][1];
+        const intersect = ((yi > lon) !== (yj > lon)) &&
+          (lat < (xj - xi) * (lon - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    function checkProhibitedZoneAtPoint(lat, lon, vehicle = state.vehicleType) {
+      for (const zone of PROHIBITED_VALLADOLID_AREAS) {
+        if (zone.scope === 'all_strict') {
+          if (pointInPolygon(lat, lon, zone.polygon)) return zone;
+        } else if (zone.scope === 'scooter_strict' && vehicle === 'scooter') {
+          if (pointInPolygon(lat, lon, zone.polygon)) return zone;
+        } else if (zone.scope === 'pedestrian_walk') {
+          // Tanto en patinete como en bici montada está prohibido / requiere ir a pie
+          if (pointInPolygon(lat, lon, zone.polygon)) return zone;
+        }
+      }
+      return null;
+    }
+
+    function loadProhibitedZonesLayer() {
+      if (!state.prohibitedZonesLayer) return;
+      state.prohibitedZonesLayer.clearLayers();
+
+      PROHIBITED_VALLADOLID_AREAS.forEach((zone) => {
+        const isTunnel = zone.type === 'tunnel';
+        const isHighway = zone.type === 'highway';
+        const color = isHighway ? '#991b1b' : (isTunnel ? '#ef4444' : '#f97316');
+
+        const poly = L.polygon(zone.polygon, {
+          color,
+          weight: 2,
+          dashArray: '4, 4',
+          fillColor: color,
+          fillOpacity: 0.28
+        }).addTo(state.prohibitedZonesLayer);
+
+        poly.bindPopup(`
+          <div style="font-size:0.82rem;line-height:1.35;">
+            <strong style="color:${color};">🚫 ${zone.name}</strong><br>
+            <span style="font-size:0.75rem;color:#cbd5e1;">${zone.desc}</span><br>
+            <small style="color:#94a3b8;">⚖️ Ordenanza Movilidad Valladolid</small>
+          </div>
+        `);
+
+        // Marcador con icono de aviso
+        const iconHtml = `<div style="background:${color};color:#fff;border-radius:999px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;box-shadow:0 2px 8px rgba(0,0,0,0.5);border:1.5px solid #fff;">${isTunnel ? '🚇' : (isHighway ? '⛔' : '🚷')}</div>`;
+        const marker = L.marker(zone.center, {
+          icon: L.divIcon({
+            className: '',
+            html: iconHtml,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+          })
+        }).addTo(state.prohibitedZonesLayer);
+
+        marker.bindPopup(`
+          <div style="font-size:0.82rem;">
+            <strong style="color:${color};">🚫 ${zone.name}</strong><br>
+            <span style="font-size:0.75rem;">${zone.desc}</span>
+          </div>
+        `);
+      });
+    }
+
     /*************************************************************************
      * 4. CÁLCULO DE RUTA Y COLORES SEGÚN PELIGROSIDAD (Sin API Key + ORS Opcional)
      * 5. RESUMEN DE LA RUTA
      *************************************************************************/
     function getWaytypeStyle(waytypeValue) {
+      // 0: VÍA PROHIBIDA POR ORDENANZA MUNICIPAL (Túneles para patinetes, autovías, carril bus no segregado)
+      if (waytypeValue === 99) {
+        return {
+          color: '#991b1b',
+          category: 'prohibited',
+          priority: 99,
+          label: '🚫 Vía Prohibida (Ordenanza Valladolid - Prohibido circular)',
+          walkRequired: true
+        };
+      }
       // 1ª PRIORIDAD: Verde (#2ecc71 - Carril Bici / Senda ciclista segregada): 6 (Cycleway), 5 (Track), 7 (Path)
       if ([5, 6, 7].includes(waytypeValue)) {
-        return { color: '#2ecc71', category: 'safe', priority: 1, label: '1º Carril bici / Vía ciclista segregada' };
+        return {
+          color: '#2ecc71',
+          category: 'safe',
+          priority: 1,
+          label: '1º Carril bici / Vía ciclista segregada',
+          walkRequired: false
+        };
       }
       // 2ª PRIORIDAD: Morado (#c500ff - Ciclocarril 30 km/h / Calle pacificada 30): 10
       if (waytypeValue === 10) {
-        return { color: '#c500ff', category: 'ciclo30', priority: 2, label: '2º Ciclocarril 30 km/h (Preferencia ciclista)' };
+        return {
+          color: '#c500ff',
+          category: 'ciclo30',
+          priority: 2,
+          label: '2º Ciclocarril 30 km/h (Preferencia ciclista / VMP)',
+          walkRequired: false
+        };
       }
       // 3ª PRIORIDAD: Rojo (#e74c3c - Carretera / Calzada con coches): 1 (State Road), 2 (Road), 3 (Street), 4
       if ([1, 2, 3, 4].includes(waytypeValue)) {
-        return { color: '#e74c3c', category: 'danger', priority: 3, label: '3º Carretera / Calzada con tráfico' };
+        return {
+          color: '#e74c3c',
+          category: 'danger',
+          priority: 3,
+          label: '3º Calzada con coches (Máx 30-50 km/h)',
+          walkRequired: false
+        };
       }
-      // 4ª PRIORIDAD (Última opción): Naranja (#f39c12 - Acera / Peatonal): 8 (Footway), 9 (Steps) u otros
-      return { color: '#f39c12', category: 'other', priority: 4, label: '4º Acera / Zona peatonal (Última opción)' };
+      // 4ª PRIORIDAD: Naranja (#f39c12 - Acera / Zona Peatonal / Desmontar a pie): 8 (Footway), 9 (Steps) u otros
+      return {
+        color: '#f39c12',
+        category: 'other',
+        priority: 4,
+        label: '🚶 4º Tramo Peatonal / Acera (¡Prohibido circular montado, ir a pie!)',
+        walkRequired: true
+      };
     }
 
     // Decodificador de geometría Polyline6 (precisión 1e-6 de Valhalla OSM) -> Array de [lon, lat]
@@ -3401,15 +3779,15 @@
       return foundCiclo30 ? 10 : null;
     }
 
-    // Evalúa el coste ponderado de una ruta según la jerarquía:
-    // 1º Carril Bici > 2º Ciclocarril 30 km/h > 3º Carretera > 4º Acera
+    // Evalúa el coste ponderado de una ruta según la jerarquía y la Ordenanza de Valladolid:
+    // 1º Carril Bici > 2º Ciclocarril 30 km/h > 3º Carretera > 4º Acera (a pie) >>> Vías Prohibidas (penalización severa)
     function scoreRouteByHierarchy(coords, waytypeValues, mode) {
       let weightedCost = 0;
       const weights = mode === 'ciclo30'
-        ? { safe: 1.05, ciclo30: 0.95, danger: 2.75, other: 6.0 }
+        ? { safe: 1.05, ciclo30: 0.95, danger: 2.75, other: 6.0, prohibited: 1000.0 }
         : (mode === 'fast'
-            ? { safe: 1.0, ciclo30: 1.05, danger: 1.15, other: 4.8 }
-            : { safe: 1.0, ciclo30: 1.4, danger: 2.6, other: 5.5 }); // 'safe': Carril bici (1.0) < Ciclocarril 30 (1.4) < Carretera (2.6) < Acera (5.5)
+            ? { safe: 1.0, ciclo30: 1.05, danger: 1.15, other: 4.8, prohibited: 1000.0 }
+            : { safe: 1.0, ciclo30: 1.4, danger: 2.6, other: 5.5, prohibited: 1000.0 });
 
       waytypeValues.forEach(([s, e, val]) => {
         let segDist = 0;
@@ -3425,6 +3803,7 @@
     }
 
     // Clasifica un trazado de Valhalla cruzando trace_attributes + Red Oficial GISAVA (Carril bici y Ciclocarril 30)
+    // y filtra/penaliza zonas prohibidas por la Ordenanza de Valladolid (Túneles para patinetes, parques, autovías, aceras)
     async function classifyValhallaTrip(trip) {
       const leg = trip?.legs?.[0];
       const summary = trip?.summary;
@@ -3464,14 +3843,30 @@
             const cycleLane = edge.cycle_lane || 'none';
             const roadClass = edge.road_class || '';
 
-            // Primero comprobar si coincide con la red oficial GISAVA (Carril Bici = 6, Ciclocarril 30 = 10)
             const midIdx = Math.floor((s + e) / 2);
             const midPt = coords[midIdx] || coords[s];
+
+            // 1. Comprobar si cruza una zona prohibida por la ordenanza municipal
+            let isProhibited = false;
+            let prohibitedReason = '';
+            if (midPt) {
+              const zoneMatch = checkProhibitedZoneAtPoint(midPt[1], midPt[0], state.vehicleType);
+              if (zoneMatch) {
+                if (zoneMatch.scope === 'all_strict' || (zoneMatch.scope === 'scooter_strict' && state.vehicleType === 'scooter')) {
+                  isProhibited = true;
+                  prohibitedReason = zoneMatch.name;
+                }
+              }
+            }
+
+            // Primero comprobar si coincide con la red oficial GISAVA (Carril Bici = 6, Ciclocarril 30 = 10)
             const gisavaMatch = midPt ? matchGisavaWaytype(midPt[1], midPt[0]) : null;
 
             let wVal = 3; // Por defecto 3ª prioridad: Carretera / Calzada (Rojo)
 
-            if (gisavaMatch === 6) {
+            if (isProhibited) {
+              wVal = 99; // VÍA PROHIBIDA POR ORDENANZA MUNICIPAL (Rojo oscuro con aviso)
+            } else if (gisavaMatch === 6) {
               wVal = 6; // 1ª prioridad: Carril bici oficial GISAVA
             } else if (
               ['cycleway', 'track', 'path', 'bridleway'].includes(use) ||
@@ -3486,7 +3881,7 @@
             ) {
               wVal = 10; // 2ª prioridad: Ciclocarril 30 km/h / Calle 30 pacificada
             } else if (['footway', 'pedestrian', 'steps', 'sidewalk'].includes(use)) {
-              wVal = 8; // 4ª prioridad (Última opción): Acera peatonal
+              wVal = 8; // 4ª prioridad: Acera peatonal (Circular montado prohibido, ir a pie)
             } else {
               wVal = 3; // 3ª prioridad: Carretera / Calzada general
             }
@@ -3500,21 +3895,42 @@
         for (let i = 0; i < coords.length - 1; i++) {
           const midLat = (coords[i][1] + coords[i + 1][1]) / 2;
           const midLon = (coords[i][0] + coords[i + 1][0]) / 2;
-          const wVal = matchGisavaWaytype(midLat, midLon) || 3;
+          const zoneMatch = checkProhibitedZoneAtPoint(midLat, midLon, state.vehicleType);
+          let wVal = 3;
+          if (zoneMatch && (zoneMatch.scope === 'all_strict' || (zoneMatch.scope === 'scooter_strict' && state.vehicleType === 'scooter'))) {
+            wVal = 99;
+          } else {
+            wVal = matchGisavaWaytype(midLat, midLon) || 3;
+          }
           waytypeValues.push([i, i + 1, wVal]);
         }
       }
 
       const rawManeuvers = Array.isArray(leg?.maneuvers) ? leg.maneuvers : [];
-      const maneuvers = rawManeuvers.map((m) => ({
-        instruction: m.instruction || 'Continúa por la ruta indicada',
-        type: typeof m.type === 'number' ? m.type : 8,
-        beginShapeIndex: typeof m.begin_shape_index === 'number' ? m.begin_shape_index : 0,
-        endShapeIndex: typeof m.end_shape_index === 'number' ? m.end_shape_index : Math.max(0, coords.length - 1),
-        lengthMeters: (m.length || 0) * 1000,
-        timeSeconds: m.time || 0,
-        streetNames: Array.isArray(m.street_names) ? m.street_names : []
-      }));
+      const maneuvers = rawManeuvers.map((m) => {
+        let text = m.instruction || 'Continúa por la ruta indicada';
+        const startIdx = typeof m.begin_shape_index === 'number' ? m.begin_shape_index : 0;
+        const pt = coords[startIdx];
+        if (pt) {
+          const zoneMatch = checkProhibitedZoneAtPoint(pt[1], pt[0], state.vehicleType);
+          if (zoneMatch) {
+            if (zoneMatch.type === 'tunnel' && state.vehicleType === 'scooter') {
+              text = `⚠️ ${zoneMatch.name}: Prohibido cruzar en patinete montado. Pasa a pie por la acera peatonal o busca ruta exterior.`;
+            } else if (zoneMatch.type === 'pedestrian' || zoneMatch.type === 'park') {
+              text = `🚶 ${zoneMatch.name}: Zona peatonal/parque. Desmonta y continúa a pie.`;
+            }
+          }
+        }
+        return {
+          instruction: text,
+          type: typeof m.type === 'number' ? m.type : 8,
+          beginShapeIndex: typeof m.begin_shape_index === 'number' ? m.begin_shape_index : 0,
+          endShapeIndex: typeof m.end_shape_index === 'number' ? m.end_shape_index : Math.max(0, coords.length - 1),
+          lengthMeters: (m.length || 0) * 1000,
+          timeSeconds: m.time || 0,
+          streetNames: Array.isArray(m.street_names) ? m.street_names : []
+        };
+      });
 
       return {
         coords,
@@ -3564,6 +3980,25 @@
           };
         }
 
+        // Generar polígonos de exclusión de Valhalla para zonas terminantemente prohibidas
+        // En patinete (VMP): excluir túneles y autovías. En bici: excluir autovías.
+        const excludePolygons = [];
+        PROHIBITED_VALLADOLID_AREAS.forEach((zone) => {
+          if (zone.scope === 'all_strict') {
+            const ring = zone.polygon.map(([lat, lon]) => [lon, lat]);
+            if (ring.length > 2) {
+              ring.push(ring[0]); // Cerrar anillo
+              excludePolygons.push(ring);
+            }
+          } else if (zone.scope === 'scooter_strict' && state.vehicleType === 'scooter') {
+            const ring = zone.polygon.map(([lat, lon]) => [lon, lat]);
+            if (ring.length > 2) {
+              ring.push(ring[0]); // Cerrar anillo
+              excludePolygons.push(ring);
+            }
+          }
+        });
+
         const valhallaBody = {
           locations: [
             { lat: origin.lat, lon: origin.lon },
@@ -3577,6 +4012,10 @@
           units: 'kilometers',
           language: 'es-ES'
         };
+
+        if (excludePolygons.length > 0) {
+          valhallaBody.exclude_polygons = excludePolygons;
+        }
 
         const routeRes = await fetch('https://valhalla1.openstreetmap.de/route', {
           method: 'POST',
@@ -3769,22 +4208,28 @@
         state.geocylRouteOverlay.clearLayers();
 
         // Dibujar polilíneas separadas con weight: 6 según el valor_waytype
+        let hasProhibitedSegment = false;
+        let hasWalkSegment = false;
+
         waytypeValues.forEach(([startIdx, endIdx, waytypeVal]) => {
           const segmentCoords = coords
             .slice(startIdx, endIdx + 1)
             .map(([lon, lat]) => [lat, lon]);
 
           const styleInfo = getWaytypeStyle(waytypeVal);
+          if (styleInfo.category === 'prohibited') hasProhibitedSegment = true;
+          if (styleInfo.walkRequired) hasWalkSegment = true;
 
           const polyline = L.polyline(segmentCoords, {
             color: styleInfo.color,
-            weight: 6,
+            weight: styleInfo.category === 'prohibited' ? 8 : 6,
+            dashArray: styleInfo.category === 'prohibited' ? '5, 5' : (styleInfo.walkRequired ? '4, 6' : undefined),
             opacity: 0.94,
             lineCap: 'round',
             lineJoin: 'round'
           }).addTo(state.routeLayerGroup);
 
-          polyline.bindPopup(`<strong>${styleInfo.label}</strong><br><small>Prioridad #${styleInfo.priority} · Waytype ID: ${waytypeVal}</small>`);
+          polyline.bindPopup(`<strong>${styleInfo.label}</strong><br><small>Prioridad #${styleInfo.priority} · ${styleInfo.walkRequired ? '⚠️ ¡Bajarse y cruzar a pie!' : 'Circulación rodada permitida'}</small>`);
         });
 
         const allLatLngs = coords.map(([lon, lat]) => [lat, lon]);
@@ -3808,7 +4253,13 @@
         }
 
         if (!state.navActive) {
-          showToast('Ruta calculada (Prioridad: Carril Bici › Ciclo 30 › Carretera › Acera).', 'success', 3000);
+          if (hasProhibitedSegment) {
+            showToast('⚠️ Atención: La ruta pasa por un tramo prohibido según la ordenanza. Busca alternativa o cruza a pie.', 'error', 4500);
+          } else if (hasWalkSegment) {
+            showToast('🚶 Ruta calculada: incluye tramos peatonales/aceras donde debes desmontar y continuar a pie.', 'info', 3500);
+          } else {
+            showToast(`Ruta 100% legal calculada para ${state.vehicleType === 'scooter' ? 'Patinete Eléctrico' : 'Bicicleta'}.`, 'success', 3000);
+          }
         }
       } catch (err) {
         console.error(err);
@@ -3830,9 +4281,10 @@
       let ciclo30Pct = 0;
       let dangerPct = 0;
       let otherPct = 0;
+      let prohibitedPct = 0;
 
       if (waytypeValues.length > 0 && coords.length > 1) {
-        let safeDist = 0, ciclo30Dist = 0, dangerDist = 0, otherDist = 0;
+        let safeDist = 0, ciclo30Dist = 0, dangerDist = 0, otherDist = 0, prohibitedDist = 0;
         waytypeValues.forEach(([s, e, val]) => {
           let segDist = 0;
           for (let i = s; i < e && i < coords.length - 1; i++) {
@@ -3844,13 +4296,15 @@
           if (category === 'safe') safeDist += segDist;
           else if (category === 'ciclo30') ciclo30Dist += segDist;
           else if (category === 'danger') dangerDist += segDist;
+          else if (category === 'prohibited') prohibitedDist += segDist;
           else otherDist += segDist;
         });
-        const total = safeDist + ciclo30Dist + dangerDist + otherDist || 1;
+        const total = safeDist + ciclo30Dist + dangerDist + otherDist + prohibitedDist || 1;
         safePct = (safeDist / total) * 100;
         ciclo30Pct = (ciclo30Dist / total) * 100;
         dangerPct = (dangerDist / total) * 100;
         otherPct = (otherDist / total) * 100;
+        prohibitedPct = (prohibitedDist / total) * 100;
       } else if (Array.isArray(waytypeSummary) && waytypeSummary.length > 0) {
         waytypeSummary.forEach((item) => {
           const waytypeVal = Number(item.value);
@@ -3860,6 +4314,7 @@
           if (category === 'safe') safePct += amount;
           else if (category === 'ciclo30') ciclo30Pct += amount;
           else if (category === 'danger') dangerPct += amount;
+          else if (category === 'prohibited') prohibitedPct += amount;
           else otherPct += amount;
         });
       }
@@ -3867,16 +4322,23 @@
       const safeRounded = Math.round(safePct);
       const ciclo30Rounded = Math.round(ciclo30Pct);
       const dangerRounded = Math.round(dangerPct);
-      const otherRounded = Math.max(0, 100 - safeRounded - ciclo30Rounded - dangerRounded);
+      const prohibitedRounded = Math.round(prohibitedPct);
+      const otherRounded = Math.max(0, 100 - safeRounded - ciclo30Rounded - dangerRounded - prohibitedRounded);
 
       document.getElementById('summarySafePct').textContent = `🟢 ${safeRounded}% Carril bici`;
       document.getElementById('summaryCiclo30Pct').textContent = `🟣 ${ciclo30Rounded}% Ciclo 30`;
-      document.getElementById('summaryDangerPct').textContent = `🔴 ${dangerRounded}% Carretera`;
+      document.getElementById('summaryDangerPct').textContent = `🔴 ${dangerRounded}% Calzada`;
 
       const otherLabel = document.getElementById('summaryOtherPct');
-      if (otherRounded > 0) {
+      if (otherRounded > 0 || prohibitedRounded > 0) {
         otherLabel.style.display = 'inline';
-        otherLabel.textContent = `🟠 ${otherRounded}% Acera`;
+        if (prohibitedRounded > 0) {
+          otherLabel.textContent = `🚫 ${prohibitedRounded}% Prohibido · 🚶 ${otherRounded}% A pie`;
+          otherLabel.style.color = '#ef4444';
+        } else {
+          otherLabel.textContent = `🚶 ${otherRounded}% Acera (A pie)`;
+          otherLabel.style.color = '#fdba74';
+        }
       } else {
         otherLabel.style.display = 'none';
       }
@@ -3884,7 +4346,12 @@
       document.getElementById('barSafe').style.width = `${safePct.toFixed(1)}%`;
       document.getElementById('barCiclo30').style.width = `${ciclo30Pct.toFixed(1)}%`;
       document.getElementById('barDanger').style.width = `${dangerPct.toFixed(1)}%`;
-      document.getElementById('barOther').style.width = `${otherPct.toFixed(1)}%`;
+      document.getElementById('barOther').style.width = `${(otherPct + prohibitedPct).toFixed(1)}%`;
+      if (prohibitedPct > 0) {
+        document.getElementById('barOther').style.background = '#b91c1c';
+      } else {
+        document.getElementById('barOther').style.background = 'var(--other-orange)';
+      }
 
       document.getElementById('routeSummary').classList.add('visible');
     }
@@ -4010,6 +4477,54 @@
         calcBtn.textContent = '⚡ Calcular ruta más rápida';
       }
     }
+
+    // Selector de Vehículo (Patinete VMP vs Bicicleta)
+    function setVehicleType(vehicle, recalculate = true) {
+      state.vehicleType = vehicle;
+      const btnScooter = document.getElementById('btnVehicleScooter');
+      const btnBicycle = document.getElementById('btnVehicleBicycle');
+      const badge = document.getElementById('vehicleRuleBadge');
+      const noticeBox = document.getElementById('ordinanceNoticeBox');
+      const legendWalkLabel = document.getElementById('legendWalkLabel');
+
+      btnScooter?.classList.toggle('active', vehicle === 'scooter');
+      btnBicycle?.classList.toggle('active', vehicle === 'bicycle');
+
+      if (vehicle === 'scooter') {
+        if (badge) {
+          badge.textContent = 'Reglas VMP activas';
+          badge.style.color = '#fde047';
+        }
+        if (noticeBox) {
+          noticeBox.className = 'ordinance-alert-box';
+          noticeBox.innerHTML = '⚠️ <strong>Patinetes (VMP):</strong> Prohibido circular por túneles urbanos (Labradores, etc.), aceras, carriles bus y parques. Casco y seguro obligatorios. ¡En acera o zona peatonal desmontar y a pie!';
+        }
+        if (legendWalkLabel) {
+          legendWalkLabel.textContent = '🚶 4º A pie (Acera/Peatonal)';
+        }
+        showToast('🛴 Modo Patinete Eléctrico (VMP): Rutas excluyen túneles y aceras conforme a la Ordenanza.', 'info', 3000);
+      } else {
+        if (badge) {
+          badge.textContent = 'Reglas Bici activas';
+          badge.style.color = '#38bdf8';
+        }
+        if (noticeBox) {
+          noticeBox.className = 'ordinance-alert-box bike';
+          noticeBox.innerHTML = '🚲 <strong>Bicicletas / Ciclos:</strong> Permitido circular por túneles urbanos (con alumbrado delantero y trasero obligatorio) y sendas ciclistas. En calle Santiago prohibido de 7:30 a 11:00 (carga y descarga). En aceras peatonales desmontar.';
+        }
+        if (legendWalkLabel) {
+          legendWalkLabel.textContent = '🚶 4º A pie (Acera/Carga y descarga)';
+        }
+        showToast('🚲 Modo Bicicleta: Permite túneles con alumbrado reglamentario y sendas ciclistas.', 'info', 3000);
+      }
+
+      if (recalculate && state.origin && state.destination && state.routeLayerGroup && state.routeLayerGroup.getLayers().length > 0) {
+        calculateRoute();
+      }
+    }
+
+    document.getElementById('btnVehicleScooter')?.addEventListener('click', () => setVehicleType('scooter'));
+    document.getElementById('btnVehicleBicycle')?.addEventListener('click', () => setVehicleType('bicycle'));
 
     // Selector de modo de ruta (Mejor/Segura vs Ciclocarril 30 vs Más Rápida)
     function setRouteMode(mode, recalculateIfActive = true) {
@@ -4232,7 +4747,12 @@
       const pill = document.getElementById('navSurfacePill');
       if (!pill) return;
       const styleInfo = getWaytypeStyle(waytypeVal);
-      if (styleInfo.category === 'safe') {
+      if (styleInfo.category === 'prohibited') {
+        pill.textContent = '🚫 ¡VÍA PROHIBIDA! (Desmontar o salir)';
+        pill.style.background = 'rgba(239, 68, 68, 0.4)';
+        pill.style.borderColor = '#ef4444';
+        pill.style.color = '#fff';
+      } else if (styleInfo.category === 'safe') {
         pill.textContent = '🟢 Vas por: 1º Carril Bici';
         pill.style.background = 'rgba(46, 204, 113, 0.22)';
         pill.style.borderColor = 'rgba(46, 204, 113, 0.6)';
@@ -4243,14 +4763,14 @@
         pill.style.borderColor = 'rgba(197, 0, 255, 0.65)';
         pill.style.color = '#f0abfc';
       } else if (styleInfo.category === 'danger') {
-        pill.textContent = '🔴 Vas por: 3º Carretera (Precaución)';
+        pill.textContent = '🔴 Vas por: 3º Calzada con coches';
         pill.style.background = 'rgba(231, 76, 60, 0.22)';
         pill.style.borderColor = 'rgba(231, 76, 60, 0.65)';
         pill.style.color = '#fca5a5';
       } else {
-        pill.textContent = '🟠 Vas por: 4º Acera Peatonal';
-        pill.style.background = 'rgba(243, 156, 18, 0.22)';
-        pill.style.borderColor = 'rgba(243, 156, 18, 0.65)';
+        pill.textContent = '🚶 4º Tramo Peatonal / Acera (A PIE)';
+        pill.style.background = 'rgba(243, 156, 18, 0.25)';
+        pill.style.borderColor = 'rgba(243, 156, 18, 0.85)';
         pill.style.color = '#fdba74';
       }
     }
@@ -4640,6 +5160,21 @@
     renderSavedPlacesUI();
     buildPresetRoutesCatalog();
     loadGisavaOfficialCycleways();
+    loadProhibitedZonesLayer();
+
+    // Interruptor de visualización de zonas y túneles prohibidos
+    const prohibitedToggle = document.getElementById('prohibitedZonesToggle');
+    if (prohibitedToggle) {
+      prohibitedToggle.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          map.addLayer(state.prohibitedZonesLayer);
+          showToast('Capa de Zonas y Túneles Prohibidos activada.', 'info', 2200);
+        } else {
+          map.removeLayer(state.prohibitedZonesLayer);
+          showToast('Capa de Zonas Prohibidas ocultada.', 'info', 2000);
+        }
+      });
+    }
 
     // Asegurar renderizado completo de teselas en móvil y cambio de orientación
     window.addEventListener('resize', () => map.invalidateSize());
