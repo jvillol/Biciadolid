@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Biciadolid - Rutas en Patinete y Bici por Valladolid</title>
+
+  <!-- Leaflet CSS desde CDN -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <style>
+    :root {
+      --primary: #0ea5e9;
+      --primary-dark: #0284c7;
+      --green-safe: #2ecc71;
+      --red-danger: #e74c3c;
+      --orange-other: #f39c12;
+      --cyan-cycleway: #00d2ff;
+      --bg-card: rgba(15, 23, 42, 0.92);
+      --bg-input: rgba(30, 41, 59, 0.9);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: rgba(148, 163, 184, 0.22);
+      --radius: 16px;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0f172a;
+      color: var(--text-main);
+    }
+
+    /* Mapa 100% pantalla */
+    #map {
+      width: 100%;
+      height: 100vh;
+      z-index: 1;
+    }
+
+    /* Notificaciones / Alertas en pantalla */
+    #toast-container {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2000;
+      width: calc(100% - 24px);
+      max-width: 440px;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      pointer-events: auto;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      line-height: 1.35;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      animation: slideDown 0.25s ease-out;
+    }
+
+    .toast.error {
+      background: rgba(220, 38, 38, 0.95);
+      color: #fff;
+      border: 1px solid rgba(254, 202, 202, 0.35);
+    }
+
+    .toast.info {
+      background: rgba(14, 165, 233, 0.95);
+      color: #fff;
+      border: 1px solid rgba(186, 230, 253, 0.35);
+    }
+
+    .toast.success {
+      background: rgba(22, 163, 74, 0.95);
+      color: #fff;
+      border: 1px solid rgba(187, 247, 208, 0.35);
+    }
+
+    .toast button {
+      background: transparent;
+      border: none;
+      color: inherit;
+      font-size: 1.1rem;
+      cursor: pointer;
+      line-height: 1;
+      opacity: 0.85;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Panel flotante superior compacto y plegable */
+    .top-panel {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      max-width: 460px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      z-index: 1000;
+      overflow: hidden;
+      transition: all 0.25s ease;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 14px;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .top-panel.collapsed .panel-header {
+      border-bottom: none;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-icon {
+      font-size: 1.25rem;
+    }
+
+    .brand-title {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+
+    .brand-subtitle {
+      font-size: 0.72rem;
+      color: var(--primary);
+      font-weight: 600;
+      background: rgba(14, 165, 233, 0.15);
+      padding: 2px 7px;
+      border-radius: 999px;
+    }
+
+    .collapse-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .panel-body {
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      max-height: 68vh;
+      overflow-y: auto;
+    }
+
+    .top-panel.collapsed .panel-body {
+      display: none;
+    }
+
+    /* Aviso / Input de API Key ORS */
+    .api-key-box {
+      background: rgba(245, 158, 11, 0.14);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.76rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .api-key-box.configured {
+      background: rgba(46, 204, 113, 0.12);
+      border-color: rgba(46, 204, 113, 0.35);
+    }
+
+    .api-key-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #fde68a;
+      font-weight: 600;
+    }
+
+    .api-key-box.configured .api-key-header {
+      color: #86efac;
+    }
+
+    .api-key-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .api-key-row input {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 6px 9px;
+      color: var(--text-main);
+      font-size: 0.78rem;
+    }
+
+    /* Inputs de Origen y Destino */
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .input-label {
+      font-size: 0.73rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 6px;
+      align-items: stretch;
+    }
+
+    .text-input {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 9px 11px;
+      color: var(--text-main);
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .text-input:focus {
+      border-color: var(--primary);
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 8px 11px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: transform 0.1s, opacity 0.2s, background 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-gps {
+      background: rgba(14, 165, 233, 0.2);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+
+    .btn-pick {
+      background: rgba(148, 163, 184, 0.14);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 8px 9px;
+      title: "Seleccionar en el mapa";
+    }
+
+    .btn-pick.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .actions-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      padding: 10px 14px;
+      font-size: 0.88rem;
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
+    }
+
+    .btn-clear {
+      background: rgba(239, 68, 68, 0.16);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 10px 12px;
+    }
+
+    /* Interruptor Overpass Carriles Bici */
+    .cycleway-toggle-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0, 210, 255, 0.09);
+      border: 1px solid rgba(0, 210, 255, 0.28);
+      border-radius: 10px;
+      padding: 8px 11px;
+      margin-top: 2px;
+    }
+
+    .cycleway-toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #e0f2fe;
+      cursor: pointer;
+    }
+
+    .cyan-line-sample {
+      width: 18px;
+      height: 3px;
+      background: var(--cyan-cycleway);
+      border-radius: 2px;
+      box-shadow: 0 0 6px var(--cyan-cycleway);
+    }
+
+    /* Switch estilizado */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 42px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: rgba(148, 163, 184, 0.3);
+      transition: 0.25s;
+      border-radius: 999px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.25s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--cyan-cycleway);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(18px);
+    }
+
+    /* Indicador de modo toque en mapa */
+    .map-pick-banner {
+      display: none;
+      font-size: 0.76rem;
+      color: #bae6fd;
+      background: rgba(2, 132, 199, 0.28);
+      border: 1px dashed rgba(56, 189, 248, 0.5);
+      border-radius: 8px;
+      padding: 6px 9px;
+      text-align: center;
+    }
+
+    .map-pick-banner.visible {
+      display: block;
+    }
+
+    /* Tarjeta flotante inferior: Resumen + Leyenda */
+    .bottom-card {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
+      max-width: 460px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px 14px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .summary-content {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .summary-content.visible {
+      display: flex;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .metric-box {
+      background: rgba(30, 41, 59, 0.75);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 7px 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .metric-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .metric-value {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 1px;
+    }
+
+    /* Barra de porcentaje segura vs calzada */
+    .safety-breakdown {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .safety-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.76rem;
+      font-weight: 600;
+    }
+
+    .pct-safe {
+      color: var(--green-safe);
+    }
+
+    .pct-danger {
+      color: var(--red-danger);
+    }
+
+    .pct-other {
+      color: var(--orange-other);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 9px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .progress-segment {
+      height: 100%;
+      transition: width 0.35s ease;
+    }
+
+    .seg-safe { background: var(--green-safe); }
+    .seg-other { background: var(--orange-other); }
+    .seg-danger { background: var(--red-danger); }
+
+    /* Leyenda de colores */
+    .legend-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    .legend-swatch {
+      width: 14px;
+      height: 5px;
+      border-radius: 3px;
+    }
+
+    /* Marcadores personalizados en el mapa */
+    .custom-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #fff;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+      border: 2px solid #fff;
+    }
+
+    .marker-origin {
+      background: #0ea5e9;
+    }
+
+    .marker-dest {
+      background: #ef4444;
+    }
+
+    /* Mover controles de zoom de Leaflet para no solapar en móvil */
+    .leaflet-bottom.leaflet-right {
+      bottom: 135px !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Contenedor de mensajes y errores -->
+  <div id="toast-container"></div>
+
+  <!-- Panel Flotante Superior Compacto y Plegable -->
+  <section class="top-panel" id="topPanel">
+    <header class="panel-header" id="panelHeader">
+      <div class="brand">
+        <span class="brand-icon">🛴</span>
+        <span class="brand-title">Biciadolid</span>
+        <span class="brand-subtitle">VMP &amp; Bici GIS</span>
+      </div>
+      <button type="button" class="collapse-btn" id="togglePanelBtn" aria-label="Plegar o desplegar controles">
+        <span id="togglePanelText">Ocultar</span>
+        <span id="togglePanelIcon">▲</span>
+      </button>
+    </header>
+
+    <div class="panel-body">
+      <!-- Configuración rápida de API Key de OpenRouteService -->
+      <div class="api-key-box" id="apiKeyBox">
+        <div class="api-key-header">
+          <span id="apiKeyStatusText">⚠️ Falta configurar ORS_API_KEY</span>
+          <a href="https://openrouteservice.org/dev/#/signup" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">Obtener gratis</a>
+        </div>
+        <div class="api-key-row">
+          <input
+            type="password"
+            id="orsApiKeyInput"
+            placeholder="Pega tu API Key de OpenRouteService..."
+            autocomplete="off"
+          />
+          <button type="button" class="btn btn-gps" id="saveApiKeyBtn">Guardar</button>
+        </div>
+      </div>
+
+      <!-- Selección de Origen -->
+      <div class="input-group">
+        <div class="input-label">
+          <span>🟢 Punto de Origen</span>
+          <span id="originCoordsLabel"></span>
+        </div>
+        <div class="input-row">
+          <input
+            type="text"
+            id="originInput"
+            class="text-input"
+            placeholder="Ej: Plaza Mayor, Calle Santiago..."
+          />
+          <button type="button" class="btn btn-gps" id="gpsBtn" title="Obtener ubicación actual">
+            📍 Usar mi GPS
+          </button>
+          <button type="button" class="btn btn-pick" id="pickOriginBtn" title="Tocar en el mapa para elegir Origen">
+            🎯
+          </button>
+        </div>
+      </div>
+
+      <!-- Selección de Destino -->
+      <div class="input-group">
+        <div class="input-label">
+          <span>🔴 Punto de Destino</span>
+          <span id="destCoordsLabel"></span>
+        </div>
+        <div class="input-row">
+          <input
+            type="text"
+            id="destInput"
+            class="text-input"
+            placeholder="Ej: Paseo de Zorrilla, Estación..."
+          />
+          <button type="button" class="btn btn-pick" id="pickDestBtn" title="Tocar en el mapa para elegir Destino">
+            🎯
+          </button>
+        </div>
+      </div>
+
+      <!-- Banner informativo para selección en el mapa -->
+      <div class="map-pick-banner" id="mapPickBanner">
+        👆 Toca cualquier punto del mapa para fijar el <strong id="mapPickModeName">Origen</strong>
+      </div>
+
+      <!-- Botones de Cálculo y Limpieza -->
+      <div class="actions-row">
+        <button type="button" class="btn btn-primary" id="calcRouteBtn">
+          ⚡ Calcular ruta segura
+        </button>
+        <button type="button" class="btn btn-clear" id="clearRouteBtn" title="Limpiar ruta y marcadores">
+          🗑️
+        </button>
+      </div>
+
+      <!-- Interruptor de Red de Carriles Bici (Overpass API) -->
+      <div class="cycleway-toggle-bar">
+        <label class="cycleway-toggle-label" for="cyclewayToggle">
+          <span class="cyan-line-sample"></span>
+          <span id="cyclewayBtnText">Ver red de carriles bici de Valladolid</span>
+        </label>
+        <label class="switch">
+          <input type="checkbox" id="cyclewayToggle" />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mapa Principal -->
+  <main id="map"></main>
+
+  <!-- Tarjeta Flotante Inferior: Resumen de Ruta + Leyenda de Colores -->
+  <aside class="bottom-card" id="bottomCard">
+    <!-- Resumen dinámico (se muestra tras calcular una ruta) -->
+    <div class="summary-content" id="routeSummary">
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <span class="metric-label">Distancia Total</span>
+          <span class="metric-value" id="summaryDistance">0.00 km</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Tiempo Estimado</span>
+          <span class="metric-value" id="summaryDuration">0 min</span>
+        </div>
+      </div>
+
+      <div class="safety-breakdown">
+        <div class="safety-labels">
+          <span class="pct-safe" id="summarySafePct">🟢 0% Seguro (Carril/Senda)</span>
+          <span class="pct-other" id="summaryOtherPct" style="display:none;">🟠 0% Otros</span>
+          <span class="pct-danger" id="summaryDangerPct">🔴 0% Calzada</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-segment seg-safe" id="barSafe" style="width: 0%"></div>
+          <div class="progress-segment seg-other" id="barOther" style="width: 0%"></div>
+          <div class="progress-segment seg-danger" id="barDanger" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leyenda de Peligrosidad por Tipo de Vía -->
+    <div class="legend-row">
+      <div class="legend-item">
+        <span class="legend-swatch" style="background: #2ecc71;"></span>
+        <span>Carril bici / Zona segura</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch" style="background: #e74c3c;"></span>
+        <span>Calzada con coches</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch" style="background: #f39c12;"></span>
+        <span>Otros tramos</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch" style="background: #00d2ff; height: 3px;"></span>
+        <span>Red OSM</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Leaflet JS desde CDN -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <script>
+    /*************************************************************************
+     * CONFIGURACIÓN DE OPENROUTESERVICE API KEY
+     *************************************************************************/
+    const ORS_API_KEY = 'TU_API_KEY_AQUI';
+
+    // Constantes geográficas de Valladolid
+    const VALLADOLID_CENTER = [41.6523, -4.7245];
+    const VALLADOLID_ZOOM = 14;
+    const VALLADOLID_BBOX = '41.58,-4.80,41.70,-4.68';
+
+    // Estado de la aplicación
+    const state = {
+      origin: null,        // { lat, lon, label }
+      destination: null,   // { lat, lon, label }
+      pickMode: 'origin',  // 'origin' | 'destination'
+      originMarker: null,
+      destMarker: null,
+      routeLayerGroup: null,
+      cyclewaysLayerGroup: null,
+      cyclewaysLoaded: false,
+      customApiKey: localStorage.getItem('biciadolid_ors_key') || ''
+    };
+
+    /*************************************************************************
+     * 1. INICIALIZACIÓN DEL MAPA BASE (Leaflet.js)
+     *************************************************************************/
+    const map = L.map('map', {
+      zoomControl: false
+    }).setView(VALLADOLID_CENTER, VALLADOLID_ZOOM);
+
+    // Control de zoom abajo a la derecha para mejor ergonomía móvil
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    // Capa base CartoDB Voyager / OpenStreetMap de alta legibilidad
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; CARTO',
+      subdomains: 'abcd',
+      maxZoom: 20
+    }).addTo(map);
+
+    // Grupos de capas: carriles bici al fondo, ruta calculada encima
+    state.cyclewaysLayerGroup = L.layerGroup();
+    state.routeLayerGroup = L.layerGroup().addTo(map);
+
+    /*************************************************************************
+     * UTILIDADES DE INTERFAZ Y MANEJO DE ERRORES
+     *************************************************************************/
+    function showToast(message, type = 'info', duration = 4500) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `
+        <span>${message}</span>
+        <button type="button" aria-label="Cerrar">&times;</button>
+      `;
+      toast.querySelector('button').addEventListener('click', () => toast.remove());
+      container.appendChild(toast);
+
+      if (duration > 0) {
+        setTimeout(() => {
+          if (toast.parentNode) toast.remove();
+        }, duration);
+      }
+    }
+
+    function getActiveOrsKey() {
+      if (state.customApiKey && state.customApiKey.trim() !== '') {
+        return state.customApiKey.trim();
+      }
+      if (ORS_API_KEY && ORS_API_KEY !== 'TU_API_KEY_AQUI') {
+        return ORS_API_KEY.trim();
+      }
+      return '';
+    }
+
+    function updateApiKeyUI() {
+      const box = document.getElementById('apiKeyBox');
+      const statusText = document.getElementById('apiKeyStatusText');
+      const input = document.getElementById('orsApiKeyInput');
+      const activeKey = getActiveOrsKey();
+
+      if (activeKey) {
+        box.classList.add('configured');
+        statusText.textContent = '✅ API Key de OpenRouteService activa';
+        input.value = state.customApiKey || ORS_API_KEY;
+      } else {
+        box.classList.remove('configured');
+        statusText.textContent = '⚠️ Configura tu ORS_API_KEY para calcular rutas';
+      }
+    }
+
+    document.getElementById('saveApiKeyBtn').addEventListener('click', () => {
+      const val = document.getElementById('orsApiKeyInput').value.trim();
+      if (!val || val === 'TU_API_KEY_AQUI') {
+        showToast('Introduce una API Key válida de OpenRouteService.', 'error');
+        return;
+      }
+      state.customApiKey = val;
+      localStorage.setItem('biciadolid_ors_key', val);
+      updateApiKeyUI();
+      showToast('API Key guardada correctamente.', 'success');
+    });
+
+    // Plegar / desplegar panel superior
+    const topPanel = document.getElementById('topPanel');
+    const togglePanelText = document.getElementById('togglePanelText');
+    const togglePanelIcon = document.getElementById('togglePanelIcon');
+
+    document.getElementById('panelHeader').addEventListener('click', () => {
+      const isCollapsed = topPanel.classList.toggle('collapsed');
+      togglePanelText.textContent = isCollapsed ? 'Controles' : 'Ocultar';
+      togglePanelIcon.textContent = isCollapsed ? '▼' : '▲';
+    });
+
+    /*************************************************************************
+     * 2. CAPA DE CARRILES BICI ACTUALIZADOS (Overpass API)
+     *************************************************************************/
+    const cyclewayToggle = document.getElementById('cyclewayToggle');
+    const cyclewayBtnText = document.getElementById('cyclewayBtnText');
+
+    async function fetchAndRenderCycleways() {
+      if (state.cyclewaysLoaded) {
+        state.cyclewaysLayerGroup.addTo(map);
+        showToast('Red de carriles bici visible en el mapa.', 'info', 2500);
+        return;
+      }
+
+      cyclewayToggle.disabled = true;
+      const originalText = cyclewayBtnText.textContent;
+      cyclewayBtnText.textContent = 'Cargando red de carriles bici...';
+
+      const overpassQuery = `[out:json];(way["highway"="cycleway"](${VALLADOLID_BBOX});way["cycleway"~"track|lane|shared_lane"](${VALLADOLID_BBOX}););out geom;`;
+
+      try {
+        const response = await fetch('https://overpass-api.de/api/interpreter', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+          },
+          body: 'data=' + encodeURIComponent(overpassQuery)
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error HTTP ${response.status} al consultar Overpass API`);
+        }
+
+        const data = await response.json();
+        const elements = data.elements || [];
+        let count = 0;
+
+        elements.forEach((el) => {
+          if (el.type === 'way' && Array.isArray(el.geometry) && el.geometry.length > 1) {
+            const latLngs = el.geometry.map((pt) => [pt.lat, pt.lon]);
+            L.polyline(latLngs, {
+              color: '#00d2ff',
+              weight: 2.5,
+              opacity: 0.75,
+              interactive: false
+            }).addTo(state.cyclewaysLayerGroup);
+            count++;
+          }
+        });
+
+        state.cyclewaysLoaded = true;
+        state.cyclewaysLayerGroup.addTo(map);
+        // Asegurar que la ruta activa quede por encima de los carriles bici de fondo
+        state.routeLayerGroup.bringToFront?.();
+
+        showToast(`Se han cargado ${count} tramos de carril bici en Valladolid.`, 'success');
+      } catch (err) {
+        console.error(err);
+        cyclewayToggle.checked = false;
+        showToast('No se pudo cargar la red de carriles bici desde Overpass API. Inténtalo de nuevo.', 'error');
+      } finally {
+        cyclewayToggle.disabled = false;
+        cyclewayBtnText.textContent = originalText;
+      }
+    }
+
+    cyclewayToggle.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        fetchAndRenderCycleways();
+      } else {
+        map.removeLayer(state.cyclewaysLayerGroup);
+        showToast('Capa de carriles bici ocultada.', 'info', 2000);
+      }
+    });
+
+    /*************************************************************************
+     * 3. SELECCIÓN DE ORIGEN Y DESTINO (GPS + Nominatim + Toque en Mapa)
+     *************************************************************************/
+    function createMarkerIcon(type) {
+      const isOrigin = type === 'origin';
+      return L.divIcon({
+        className: '',
+        html: `<div class="custom-marker ${isOrigin ? 'marker-origin' : 'marker-dest'}">${isOrigin ? 'A' : 'B'}</div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      });
+    }
+
+    function setOriginPoint(lat, lon, label = '') {
+      state.origin = { lat: Number(lat), lon: Number(lon), label };
+
+      if (state.originMarker) {
+        state.originMarker.setLatLng([lat, lon]);
+      } else {
+        state.originMarker = L.marker([lat, lon], {
+          icon: createMarkerIcon('origin'),
+          draggable: true
+        }).addTo(map);
+
+        state.originMarker.on('dragend', (ev) => {
+          const pos = ev.target.getLatLng();
+          setOriginPoint(pos.lat, pos.lng, `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`);
+        });
+      }
+
+      document.getElementById('originCoordsLabel').textContent = `${Number(lat).toFixed(4)}, ${Number(lon).toFixed(4)}`;
+      if (label) {
+        document.getElementById('originInput').value = label;
+      }
+    }
+
+    function setDestinationPoint(lat, lon, label = '') {
+      state.destination = { lat: Number(lat), lon: Number(lon), label };
+
+      if (state.destMarker) {
+        state.destMarker.setLatLng([lat, lon]);
+      } else {
+        state.destMarker = L.marker([lat, lon], {
+          icon: createMarkerIcon('dest'),
+          draggable: true
+        }).addTo(map);
+
+        state.destMarker.on('dragend', (ev) => {
+          const pos = ev.target.getLatLng();
+          setDestinationPoint(pos.lat, pos.lng, `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`);
+        });
+      }
+
+      document.getElementById('destCoordsLabel').textContent = `${Number(lat).toFixed(4)}, ${Number(lon).toFixed(4)}`;
+      if (label) {
+        document.getElementById('destInput').value = label;
+      }
+    }
+
+    // Modo selección tocando sobre el mapa
+    const pickOriginBtn = document.getElementById('pickOriginBtn');
+    const pickDestBtn = document.getElementById('pickDestBtn');
+    const mapPickBanner = document.getElementById('mapPickBanner');
+    const mapPickModeName = document.getElementById('mapPickModeName');
+
+    function updatePickModeUI(mode) {
+      state.pickMode = mode;
+      pickOriginBtn.classList.toggle('active', mode === 'origin');
+      pickDestBtn.classList.toggle('active', mode === 'destination');
+      mapPickBanner.classList.add('visible');
+      mapPickModeName.textContent = mode === 'origin' ? 'Origen (A)' : 'Destino (B)';
+    }
+
+    pickOriginBtn.addEventListener('click', () => updatePickModeUI('origin'));
+    pickDestBtn.addEventListener('click', () => updatePickModeUI('destination'));
+
+    // Al tocar el mapa, asigna Origen o Destino
+    map.on('click', (e) => {
+      const { lat, lng } = e.latlng;
+      const coordText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
+      if (!state.origin || state.pickMode === 'origin') {
+        setOriginPoint(lat, lng, coordText);
+        updatePickModeUI('destination');
+        showToast('Origen fijado en el mapa. Ahora toca para fijar el Destino.', 'info', 2500);
+      } else {
+        setDestinationPoint(lat, lng, coordText);
+        showToast('Destino fijado en el mapa.', 'info', 2200);
+      }
+    });
+
+    // Botón "📍 Usar mi GPS"
+    const gpsBtn = document.getElementById('gpsBtn');
+    gpsBtn.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        showToast('Tu navegador o dispositivo no soporta geolocalización GPS.', 'error');
+        return;
+      }
+
+      gpsBtn.disabled = true;
+      gpsBtn.textContent = '⏳ GPS...';
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setOriginPoint(latitude, longitude, 'Mi ubicación GPS');
+          map.setView([latitude, longitude], 15);
+          updatePickModeUI('destination');
+          showToast('Ubicación GPS establecida como punto de origen.', 'success');
+          gpsBtn.disabled = false;
+          gpsBtn.textContent = '📍 Usar mi GPS';
+        },
+        (error) => {
+          gpsBtn.disabled = false;
+          gpsBtn.textContent = '📍 Usar mi GPS';
+          let msg = 'No se pudo obtener tu ubicación GPS.';
+          if (error.code === error.PERMISSION_DENIED) {
+            msg = 'Permiso de GPS denegado. Activa la ubicación en tu navegador o selecciona en el mapa.';
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            msg = 'Señal GPS no disponible en este momento.';
+          } else if (error.code === error.TIMEOUT) {
+            msg = 'Tiempo de espera agotado al buscar señal GPS.';
+          }
+          showToast(msg, 'error');
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 30000
+        }
+      );
+    });
+
+    // Geocodificación con Nominatim API
+    async function geocodeStreetInValladolid(queryText) {
+      const cleanQuery = queryText.trim();
+      if (!cleanQuery) return null;
+
+      // Si el usuario ya introdujo coordenadas tipo "41.6523, -4.7245"
+      const coordMatch = cleanQuery.match(/^(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)$/);
+      if (coordMatch) {
+        return {
+          lat: parseFloat(coordMatch[1]),
+          lon: parseFloat(coordMatch[3]),
+          display_name: cleanQuery
+        };
+      }
+
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanQuery + ', Valladolid, España')}&limit=1`;
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al conectar con el servicio de búsqueda de calles (Nominatim).');
+      }
+
+      const results = await response.json();
+      if (!results || results.length === 0) {
+        return null;
+      }
+
+      return {
+        lat: parseFloat(results[0].lat),
+        lon: parseFloat(results[0].lon),
+        display_name: results[0].display_name.split(',').slice(0, 2).join(',')
+      };
+    }
+
+    /*************************************************************************
+     * 4. CÁLCULO DE RUTA Y COLORES SEGÚN PELIGROSIDAD (OpenRouteService API)
+     * 5. RESUMEN DE LA RUTA
+     *************************************************************************/
+    function getWaytypeStyle(waytypeValue) {
+      // Verde (#2ecc71 - Seguro / Carril Bici o Peatonal): 6 (Cycleway), 5 (Track), 7 (Path), 8 (Footway)
+      if ([5, 6, 7, 8].includes(waytypeValue)) {
+        return { color: '#2ecc71', category: 'safe', label: 'Carril bici / Zona segura' };
+      }
+      // Rojo (#e74c3c - Cuidado / Carretera con coches): 1 (State Road), 2 (Road), 3 (Street)
+      if ([1, 2, 3].includes(waytypeValue)) {
+        return { color: '#e74c3c', category: 'danger', label: 'Carretera / Calle con tráfico' };
+      }
+      // Naranja (#f39c12 - Otros): cualquier otro valor
+      return { color: '#f39c12', category: 'other', label: 'Otro tipo de vía' };
+    }
+
+    async function calculateRoute() {
+      const apiKey = getActiveOrsKey();
+      if (!apiKey) {
+        showToast('Falta configurar la clave ORS_API_KEY. Pégala en el cuadro superior o en la constante del código.', 'error');
+        document.getElementById('orsApiKeyInput').focus();
+        return;
+      }
+
+      const originText = document.getElementById('originInput').value.trim();
+      const destText = document.getElementById('destInput').value.trim();
+      const calcBtn = document.getElementById('calcRouteBtn');
+
+      calcBtn.disabled = true;
+      calcBtn.textContent = '⏳ Calculando ruta...';
+
+      try {
+        // Resolver Origen por Nominatim si el usuario escribió una calle nueva o no hay coordenadas
+        if (originText && (!state.origin || state.origin.label !== originText)) {
+          const geoOrigin = await geocodeStreetInValladolid(originText);
+          if (!geoOrigin) {
+            throw new Error(`No encontramos el origen "${originText}" en Valladolid.`);
+          }
+          setOriginPoint(geoOrigin.lat, geoOrigin.lon, geoOrigin.display_name);
+        }
+
+        // Resolver Destino por Nominatim si el usuario escribió una calle nueva o no hay coordenadas
+        if (destText && (!state.destination || state.destination.label !== destText)) {
+          const geoDest = await geocodeStreetInValladolid(destText);
+          if (!geoDest) {
+            throw new Error(`No encontramos el destino "${destText}" en Valladolid.`);
+          }
+          setDestinationPoint(geoDest.lat, geoDest.lon, geoDest.display_name);
+        }
+
+        if (!state.origin || !state.destination) {
+          throw new Error('Selecciona un Origen y un Destino (escribiendo una calle, usando el GPS o tocando el mapa).');
+        }
+
+        // Petición POST a OpenRouteService GeoJSON
+        // Nota: ORS requiere [longitud, latitud]
+        const requestBody = {
+          coordinates: [
+            [state.origin.lon, state.origin.lat],
+            [state.destination.lon, state.destination.lat]
+          ],
+          extra_info: ['waytype']
+        };
+
+        const response = await fetch('https://api.openrouteservice.org/v2/directions/cycling-regular/geojson', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8',
+            'Content-Type': 'application/json',
+            'Authorization': apiKey
+          },
+          body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+          let errDetail = `Error HTTP ${response.status}`;
+          try {
+            const errJson = await response.json();
+            if (errJson.error && errJson.error.message) {
+              errDetail = errJson.error.message;
+            }
+          } catch (_) {}
+          throw new Error(`OpenRouteService rechazó la petición: ${errDetail}`);
+        }
+
+        const data = await response.json();
+        if (!data.features || data.features.length === 0) {
+          throw new Error('No se encontró ninguna ruta disponible entre ambos puntos.');
+        }
+
+        const feature = data.features[0];
+        const coords = feature.geometry.coordinates; // Array de [lon, lat]
+        const waytypeValues = feature.properties?.extras?.waytype?.values || [];
+        const waytypeSummary = feature.properties?.extras?.waytype?.summary || [];
+        const routeSummary = feature.properties?.summary || { distance: 0, duration: 0 };
+
+        // Limpiar ruta anterior
+        state.routeLayerGroup.clearLayers();
+
+        // Dibujar polilíneas separadas según el valor_waytype
+        waytypeValues.forEach(([startIdx, endIdx, waytypeVal]) => {
+          const segmentCoords = coords
+            .slice(startIdx, endIdx + 1)
+            .map(([lon, lat]) => [lat, lon]); // Convertir a [lat, lon] para Leaflet
+
+          const styleInfo = getWaytypeStyle(waytypeVal);
+
+          const polyline = L.polyline(segmentCoords, {
+            color: styleInfo.color,
+            weight: 6,
+            opacity: 0.92,
+            lineCap: 'round',
+            lineJoin: 'round'
+          }).addTo(state.routeLayerGroup);
+
+          polyline.bindPopup(`<strong>${styleInfo.label}</strong><br><small>Waytype ID: ${waytypeVal}</small>`);
+        });
+
+        // Ajustar vista del mapa a la ruta completa
+        const allLatLngs = coords.map(([lon, lat]) => [lat, lon]);
+        if (allLatLngs.length > 0) {
+          map.fitBounds(L.latLngBounds(allLatLngs), {
+            paddingTopLeft: [30, 210],
+            paddingBottomRight: [30, 170]
+          });
+        }
+
+        // Actualizar tarjeta inferior con el Resumen de la Ruta
+        renderRouteSummary(routeSummary, waytypeSummary, waytypeValues, coords);
+
+        // En pantallas pequeñas, plegar el panel superior automáticamente para ver mejor la ruta
+        if (window.innerWidth < 640 && !topPanel.classList.contains('collapsed')) {
+          topPanel.classList.add('collapsed');
+          togglePanelText.textContent = 'Controles';
+          togglePanelIcon.textContent = '▼';
+        }
+
+        showToast('Ruta calculada con éxito.', 'success', 3000);
+      } catch (err) {
+        console.error(err);
+        showToast(err.message || 'Ocurrió un error al calcular la ruta.', 'error');
+      } finally {
+        calcBtn.disabled = false;
+        calcBtn.textContent = '⚡ Calcular ruta segura';
+      }
+    }
+
+    function renderRouteSummary(routeSummary, waytypeSummary, waytypeValues, coords) {
+      const distanceKm = (routeSummary.distance || 0) / 1000;
+      const durationMin = Math.round((routeSummary.duration || 0) / 60);
+
+      document.getElementById('summaryDistance').textContent = `${distanceKm.toFixed(2)} km`;
+      document.getElementById('summaryDuration').textContent = `${durationMin} min`;
+
+      let safePct = 0;
+      let dangerPct = 0;
+      let otherPct = 0;
+
+      // Usar features[0].properties.extras.waytype.summary
+      // Cada elemento de waytype.summary tiene { value: <waytype>, distance: <metros>, amount: <porcentaje 0-100> }
+      if (Array.isArray(waytypeSummary) && waytypeSummary.length > 0) {
+        waytypeSummary.forEach((item) => {
+          const waytypeVal = Number(item.value);
+          const amount = Number(item.amount) || 0;
+          const { category } = getWaytypeStyle(waytypeVal);
+
+          if (category === 'safe') safePct += amount;
+          else if (category === 'danger') dangerPct += amount;
+          else otherPct += amount;
+        });
+      } else if (waytypeValues.length > 0 && coords.length > 1) {
+        // Fallback por si summary viniera vacío: cálculo geométrico por segmentos
+        let safeDist = 0, dangerDist = 0, otherDist = 0;
+        waytypeValues.forEach(([s, e, val]) => {
+          let segDist = 0;
+          for (let i = s; i < e; i++) {
+            const p1 = L.latLng(coords[i][1], coords[i][0]);
+            const p2 = L.latLng(coords[i + 1][1], coords[i + 1][0]);
+            segDist += p1.distanceTo(p2);
+          }
+          const { category } = getWaytypeStyle(val);
+          if (category === 'safe') safeDist += segDist;
+          else if (category === 'danger') dangerDist += segDist;
+          else otherDist += segDist;
+        });
+        const total = safeDist + dangerDist + otherDist || 1;
+        safePct = (safeDist / total) * 100;
+        dangerPct = (dangerDist / total) * 100;
+        otherPct = (otherDist / total) * 100;
+      }
+
+      const safeRounded = Math.round(safePct);
+      const dangerRounded = Math.round(dangerPct);
+      const otherRounded = Math.max(0, 100 - safeRounded - dangerRounded);
+
+      document.getElementById('summarySafePct').textContent = `🟢 ${safeRounded}% Seguro (Carril/Senda)`;
+      document.getElementById('summaryDangerPct').textContent = `🔴 ${dangerRounded}% Calzada`;
+
+      const otherLabel = document.getElementById('summaryOtherPct');
+      if (otherRounded > 0) {
+        otherLabel.style.display = 'inline';
+        otherLabel.textContent = `🟠 ${otherRounded}% Otros`;
+      } else {
+        otherLabel.style.display = 'none';
+      }
+
+      document.getElementById('barSafe').style.width = `${safePct.toFixed(1)}%`;
+      document.getElementById('barOther').style.width = `${otherPct.toFixed(1)}%`;
+      document.getElementById('barDanger').style.width = `${dangerPct.toFixed(1)}%`;
+
+      document.getElementById('routeSummary').classList.add('visible');
+    }
+
+    // Limpiar ruta y marcadores
+    document.getElementById('clearRouteBtn').addEventListener('click', () => {
+      state.origin = null;
+      state.destination = null;
+
+      if (state.originMarker) {
+        map.removeLayer(state.originMarker);
+        state.originMarker = null;
+      }
+      if (state.destMarker) {
+        map.removeLayer(state.destMarker);
+        state.destMarker = null;
+      }
+
+      state.routeLayerGroup.clearLayers();
+      document.getElementById('originInput').value = '';
+      document.getElementById('destInput').value = '';
+      document.getElementById('originCoordsLabel').textContent = '';
+      document.getElementById('destCoordsLabel').textContent = '';
+      document.getElementById('routeSummary').classList.remove('visible');
+      mapPickBanner.classList.remove('visible');
+      pickOriginBtn.classList.remove('active');
+      pickDestBtn.classList.remove('active');
+      state.pickMode = 'origin';
+
+      map.setView(VALLADOLID_CENTER, VALLADOLID_ZOOM);
+      showToast('Mapa y ruta reiniciados.', 'info', 2000);
+    });
+
+    document.getElementById('calcRouteBtn').addEventListener('click', calculateRoute);
+
+    // Permitir pulsar Enter en los inputs para lanzar el cálculo
+    ['originInput', 'destInput'].forEach((id) => {
+      document.getElementById(id).addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          calculateRoute();
+        }
+      });
+    });
+
+    // Inicializar estado de la API Key al arrancar
+    updateApiKeyUI();
+  </script>
+</body>
+</html>
