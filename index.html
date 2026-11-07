@@ -2569,9 +2569,20 @@
             const isCiclo = t.startsWith('ciclocarri');
             const lines = geom.type === 'LineString' ? [geom.coordinates] : (geom.type === 'MultiLineString' ? geom.coordinates : []);
             lines.forEach((coordsArr) => {
+              if (!coordsArr || coordsArr.length === 0) return;
+              let minLat = 90, maxLat = -90, minLon = 180, maxLon = -180;
+              for (let i = 0; i < coordsArr.length; i++) {
+                const lon = coordsArr[i][0];
+                const lat = coordsArr[i][1];
+                if (lat < minLat) minLat = lat;
+                if (lat > maxLat) maxLat = lat;
+                if (lon < minLon) minLon = lon;
+                if (lon > maxLon) maxLon = lon;
+              }
               state.gisavaPolylines.push({
                 waytype: isCiclo ? 10 : 6,
-                coords: coordsArr // Array de [lon, lat]
+                coords: coordsArr, // Array de [lon, lat]
+                bbox: [minLat, maxLat, minLon, maxLon]
               });
             });
           }
@@ -3747,19 +3758,65 @@
       return coordinates;
     }
 
-    // Comprueba si un punto [lat, lon] coincide con la red oficial de carriles bici y ciclocarriles GISAVA (~22 metros)
+    // Distancia al cuadrado (en grados ajustados cos(lat)) de un punto (pLat, pLon) a un segmento (aLat, aLon)-(bLat, bLon)
+    function pointToSegmentDistSq(pLat, pLon, aLat, aLon, bLat, bLon) {
+      const cosLat = 0.747; // cos(41.65°)
+      const dx = (bLon - aLon) * cosLat;
+      const dy = bLat - aLat;
+      const lenSq = dx * dx + dy * dy;
+      const px = (pLon - aLon) * cosLat;
+      const py = pLat - aLat;
+      if (lenSq === 0) {
+        return px * px + py * py;
+      }
+      let t = (px * dx + py * dy) / lenSq;
+      if (t < 0) t = 0;
+      else if (t > 1) t = 1;
+      const projX = t * dx;
+      const projY = t * dy;
+      const ex = px - projX;
+      const ey = py - projY;
+      return ex * ex + ey * ey;
+    }
+
+    // Comprueba si un punto [lat, lon] coincide con la red oficial de carriles bici y ciclocarriles GISAVA (~32 metros)
     function matchGisavaWaytype(lat, lon) {
       if (!state.gisavaPolylines || state.gisavaPolylines.length === 0) return null;
-      const thresholdDegSq = 0.00022 * 0.00022;
+      const thresholdDeg = 0.00029; // ~32 metros de margen
+      const thresholdSq = thresholdDeg * thresholdDeg;
       let foundCiclo30 = false;
-      for (const item of state.gisavaPolylines) {
+
+      for (let j = 0; j < state.gisavaPolylines.length; j++) {
+        const item = state.gisavaPolylines[j];
+        if (item.bbox) {
+          if (
+            lat < item.bbox[0] - thresholdDeg ||
+            lat > item.bbox[1] + thresholdDeg ||
+            lon < item.bbox[2] - thresholdDeg ||
+            lon > item.bbox[3] + thresholdDeg
+          ) {
+            continue;
+          }
+        }
         const pts = item.coords;
-        for (let i = 0; i < pts.length; i++) {
-          const dLat = lat - pts[i][0];
-          const dLon = (lon - pts[i][1]) * 0.747; // Corrección cos(41.65°)
-          if (dLat * dLat + dLon * dLon <= thresholdDegSq) {
-            if (item.waytype === 6) return 6; // Prioridad 1: Carril bici segregado (Verde)
-            if (item.waytype === 10) foundCiclo30 = true; // Prioridad 2: Ciclocarril 30 km/h (Morado)
+        if (!pts || pts.length === 0) continue;
+        if (pts.length === 1) {
+          const dLat = lat - pts[0][1];
+          const dLon = (lon - pts[0][0]) * 0.747;
+          if (dLat * dLat + dLon * dLon <= thresholdSq) {
+            if (item.waytype === 6) return 6;
+            if (item.waytype === 10) foundCiclo30 = true;
+          }
+        } else {
+          for (let i = 0; i < pts.length - 1; i++) {
+            const dSq = pointToSegmentDistSq(lat, lon, pts[i][1], pts[i][0], pts[i + 1][1], pts[i + 1][0]);
+            if (dSq <= thresholdSq) {
+              if (item.waytype === 6) return 6; // Prioridad 1: Carril bici segregado
+              if (item.waytype === 10) {
+                foundCiclo30 = true;
+                break; // Siguiente polilínea para seguir buscando si hay carril bici
+              }
+            }
           }
         }
       }
@@ -3767,15 +3824,15 @@
     }
 
     // Evalúa el coste ponderado de una ruta según la jerarquía y la Ordenanza de Valladolid:
-    // 1º Carril Bici (peso 1.0) > 2º Carretera 30 km/h / Ciclocarril (peso 1.35) > 3º Otras carreteras legales (≤50 km/h, peso 2.7) > 4º Acera (a pie, peso 6.0) >>> Vías Prohibidas (peso 1000.0)
+    // 1º Carril Bici (peso 0.85) > 2º Carretera 30 km/h / Ciclocarril (peso 1.15) > 3º Otras carreteras legales (≤50 km/h, peso 3.2) > 4º Acera (a pie, peso 6.5) >>> Vías Prohibidas (peso 10000.0)
     function scoreRouteByHierarchy(coords, waytypeValues, mode) {
       let weightedCost = 0;
       // En modo 'safe' (por defecto y recomendado): máxima preferencia por carril bici y ciclocarril 30 km/h
       const weights = mode === 'ciclo30'
-        ? { safe: 1.05, ciclo30: 0.95, danger: 2.85, other: 6.5, prohibited: 1000.0 }
+        ? { safe: 1.05, ciclo30: 0.85, danger: 3.5, other: 7.0, prohibited: 10000.0 }
         : (mode === 'fast'
-            ? { safe: 1.0, ciclo30: 1.08, danger: 1.18, other: 5.0, prohibited: 1000.0 }
-            : { safe: 0.95, ciclo30: 1.35, danger: 2.75, other: 6.0, prohibited: 1000.0 }); // 'safe' (Recomendado): Carril bici (0.95) < Carretera 30 (1.35) < Otras carreteras legales (2.75) < Acera a pie (6.0)
+            ? { safe: 1.0, ciclo30: 1.05, danger: 1.15, other: 5.0, prohibited: 10000.0 }
+            : { safe: 0.85, ciclo30: 1.15, danger: 3.2, other: 6.5, prohibited: 10000.0 }); // 'safe' (Recomendado): Carril bici (0.85) < Ciclocarril 30 (1.15) < Otras carreteras legales (3.2) < Acera a pie (6.5)
 
       waytypeValues.forEach(([s, e, val]) => {
         let segDist = 0;
@@ -3785,7 +3842,7 @@
           segDist += p1.distanceTo(p2);
         }
         const { category } = getWaytypeStyle(val);
-        weightedCost += segDist * (weights[category] || 2.6);
+        weightedCost += segDist * (weights[category] || 3.0);
       });
       return weightedCost;
     }
@@ -3811,6 +3868,8 @@
                 'edge.use',
                 'edge.cycle_lane',
                 'edge.road_class',
+                'edge.speed',
+                'edge.speed_limit',
                 'edge.begin_shape_index',
                 'edge.end_shape_index'
               ],
@@ -3830,6 +3889,8 @@
             const use = edge.use || '';
             const cycleLane = edge.cycle_lane || 'none';
             const roadClass = edge.road_class || '';
+            const speedLimit = typeof edge.speed_limit === 'number' ? edge.speed_limit : null;
+            const speed = typeof edge.speed === 'number' ? edge.speed : null;
 
             const midIdx = Math.floor((s + e) / 2);
             const midPt = coords[midIdx] || coords[s];
@@ -3847,10 +3908,28 @@
               }
             }
 
-            // Primero comprobar si coincide con la red oficial GISAVA (Carril Bici = 6, Ciclocarril 30 = 10)
-            const gisavaMatch = midPt ? matchGisavaWaytype(midPt[1], midPt[0]) : null;
+            // 2. Comprobar con la red oficial GISAVA testeando varios puntos del tramo
+            let gisavaMatch = null;
+            const sampleIndices = [midIdx, s, e];
+            if (e - s > 3) {
+              sampleIndices.push(Math.floor((s * 2 + e) / 3));
+              sampleIndices.push(Math.floor((s + e * 2) / 3));
+            }
+            for (const idx of sampleIndices) {
+              const pt = coords[idx];
+              if (pt) {
+                const m = matchGisavaWaytype(pt[1], pt[0]);
+                if (m === 6) {
+                  gisavaMatch = 6;
+                  break; // Carril bici tiene prioridad máxima
+                }
+                if (m === 10) {
+                  gisavaMatch = 10;
+                }
+              }
+            }
 
-            let wVal = 3; // Por defecto 3ª prioridad: Carretera / Calzada (Rojo)
+            let wVal = 3; // Por defecto 3ª prioridad: Carretera / Calzada general (Rojo)
 
             if (isProhibited) {
               wVal = 99; // VÍA PROHIBIDA POR ORDENANZA MUNICIPAL (Rojo oscuro con aviso)
@@ -3860,18 +3939,21 @@
               ['cycleway', 'track', 'path', 'bridleway'].includes(use) ||
               ['separated', 'dedicated'].includes(cycleLane)
             ) {
-              wVal = 6; // 1ª prioridad: Carril bici / senda segregada
+              wVal = 6; // 1ª prioridad: Carril bici / senda segregada OSM
             } else if (
               gisavaMatch === 10 ||
               cycleLane === 'shared' ||
               ['living_street', 'service_road', 'alley'].includes(use) ||
-              roadClass === 'residential'
+              roadClass === 'residential' ||
+              roadClass === 'service_other' ||
+              (speedLimit !== null && speedLimit <= 30) ||
+              (speed !== null && speed <= 30)
             ) {
-              wVal = 10; // 2ª prioridad: Ciclocarril 30 km/h / Calle 30 pacificada
+              wVal = 10; // 2ª prioridad: Ciclocarril 30 km/h / Calle 30 pacificada (Morado)
             } else if (['footway', 'pedestrian', 'steps', 'sidewalk'].includes(use)) {
               wVal = 8; // 4ª prioridad: Acera peatonal (Circular montado prohibido, ir a pie)
             } else {
-              wVal = 3; // 3ª prioridad: Carretera / Calzada general
+              wVal = 3; // 3ª prioridad: Otras carreteras legales (≤50 km/h, carril derecho)
             }
 
             waytypeValues.push([s, e, wVal]);
@@ -3941,29 +4023,29 @@
           // Prioriza Carril Bici (1º) y Ciclocarril 30 (2º) sobre Carretera (3º), evitando Aceras (4º)
           bicycleOptions = {
             bicycle_type: 'Hybrid',
-            use_roads: 0.1,
-            use_tracks: 0.95,
-            use_living_streets: 0.9,
+            use_roads: 0.02,
+            use_tracks: 1.0,
+            use_living_streets: 1.0,
             use_hills: 0.25,
-            cycling_speed: 19.0
+            cycling_speed: 18.0
           };
         } else if (mode === 'ciclo30') {
           // Modo Ciclocarril 30 km/h: máxima afinidad por vías 30 km/h y carriles bici urbanos
           bicycleOptions = {
             bicycle_type: 'City',
-            use_roads: 0.3,
-            use_tracks: 0.85,
+            use_roads: 0.08,
+            use_tracks: 0.9,
             use_living_streets: 1.0,
             use_hills: 0.3,
-            cycling_speed: 21.0
+            cycling_speed: 20.0
           };
         } else {
           // Modo Más Rápida: trayecto directo por calzada, ciclocarril 30 y carril bici (evitando aceras)
           bicycleOptions = {
             bicycle_type: 'Road',
             use_roads: 0.85,
-            use_tracks: 0.25,
-            use_living_streets: 0.75,
+            use_tracks: 0.3,
+            use_living_streets: 0.85,
             cycling_speed: 25.0
           };
         }
@@ -4343,8 +4425,8 @@
       const otherRounded = Math.max(0, 100 - safeRounded - ciclo30Rounded - dangerRounded - prohibitedRounded);
 
       document.getElementById('summarySafePct').textContent = `🟢 ${safeRounded}% Carril bici`;
-      document.getElementById('summaryCiclo30Pct').textContent = `🟣 ${ciclo30Rounded}% Carretera 30`;
-      document.getElementById('summaryDangerPct').textContent = `🔴 ${dangerRounded}% Carretera legal (≤50)`;
+      document.getElementById('summaryCiclo30Pct').textContent = `🟣 ${ciclo30Rounded}% Ciclocarril 30`;
+      document.getElementById('summaryDangerPct').textContent = `🔴 ${dangerRounded}% Carretera (≤50)`;
 
       const otherLabel = document.getElementById('summaryOtherPct');
       if (otherRounded > 0 || prohibitedRounded > 0) {
