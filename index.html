@@ -1725,7 +1725,7 @@
             </button>
           </div>
           <div class="priority-rule-bar">
-            Prioridad seguridad: <strong>1º Carril bici</strong> › <strong>2º Ciclocarril 30</strong> › <strong>3º Carretera</strong> › <strong>4º Acera</strong>
+            Prioridad legal: <strong>1º Carril bici</strong> › <strong>2º Carretera 30 km/h (Ciclocarril)</strong> › <strong>3º Otras carreteras legales (≤50 km/h)</strong> › <strong>4º Acera (A pie)</strong>
           </div>
         </div>
 
@@ -2020,9 +2020,9 @@
         <span class="legend-swatch" style="background: #c500ff;"></span>
         <span>2º Ciclocarril 30 km/h</span>
       </div>
-      <div class="legend-item" title="3ª Prioridad: Calzada / Carretera con tráfico general">
+      <div class="legend-item" title="3ª Prioridad: Otras carreteras y calzadas legales con coches (máx 50 km/h, circular por el carril derecho)">
         <span class="legend-swatch" style="background: #e74c3c;"></span>
-        <span>3º Carretera</span>
+        <span>3º Calzada legal (≤50)</span>
       </div>
       <div class="legend-item" title="Tramo peatonal / Acera: En patinete o bici prohibido circular montado (ir a pie)">
         <span class="legend-swatch" style="background: #f39c12; border: 1.5px dashed #fff;"></span>
@@ -3710,13 +3710,13 @@
           walkRequired: false
         };
       }
-      // 3ª PRIORIDAD: Rojo (#e74c3c - Carretera / Calzada con coches): 1 (State Road), 2 (Road), 3 (Street), 4
+      // 3ª PRIORIDAD: Rojo (#e74c3c - Otras carreteras y calzadas legales con coches, máx 50 km/h, carril derecho): 1 (State Road), 2 (Road), 3 (Street), 4
       if ([1, 2, 3, 4].includes(waytypeValue)) {
         return {
           color: '#e74c3c',
           category: 'danger',
           priority: 3,
-          label: '3º Calzada con coches (Máx 30-50 km/h)',
+          label: '3º Calzada legal con tráfico (Máx 50 km/h, circular por el carril derecho)',
           walkRequired: false
         };
       }
@@ -3780,14 +3780,15 @@
     }
 
     // Evalúa el coste ponderado de una ruta según la jerarquía y la Ordenanza de Valladolid:
-    // 1º Carril Bici > 2º Ciclocarril 30 km/h > 3º Carretera > 4º Acera (a pie) >>> Vías Prohibidas (penalización severa)
+    // 1º Carril Bici (peso 1.0) > 2º Carretera 30 km/h / Ciclocarril (peso 1.35) > 3º Otras carreteras legales (≤50 km/h, peso 2.7) > 4º Acera (a pie, peso 6.0) >>> Vías Prohibidas (peso 1000.0)
     function scoreRouteByHierarchy(coords, waytypeValues, mode) {
       let weightedCost = 0;
+      // En modo 'safe' (por defecto y recomendado): máxima preferencia por carril bici y ciclocarril 30 km/h
       const weights = mode === 'ciclo30'
-        ? { safe: 1.05, ciclo30: 0.95, danger: 2.75, other: 6.0, prohibited: 1000.0 }
+        ? { safe: 1.05, ciclo30: 0.95, danger: 2.85, other: 6.5, prohibited: 1000.0 }
         : (mode === 'fast'
-            ? { safe: 1.0, ciclo30: 1.05, danger: 1.15, other: 4.8, prohibited: 1000.0 }
-            : { safe: 1.0, ciclo30: 1.4, danger: 2.6, other: 5.5, prohibited: 1000.0 });
+            ? { safe: 1.0, ciclo30: 1.08, danger: 1.18, other: 5.0, prohibited: 1000.0 }
+            : { safe: 0.95, ciclo30: 1.35, danger: 2.75, other: 6.0, prohibited: 1000.0 }); // 'safe' (Recomendado): Carril bici (0.95) < Carretera 30 (1.35) < Otras carreteras legales (2.75) < Acera a pie (6.0)
 
       waytypeValues.forEach(([s, e, val]) => {
         let segDist = 0;
@@ -4326,8 +4327,8 @@
       const otherRounded = Math.max(0, 100 - safeRounded - ciclo30Rounded - dangerRounded - prohibitedRounded);
 
       document.getElementById('summarySafePct').textContent = `🟢 ${safeRounded}% Carril bici`;
-      document.getElementById('summaryCiclo30Pct').textContent = `🟣 ${ciclo30Rounded}% Ciclo 30`;
-      document.getElementById('summaryDangerPct').textContent = `🔴 ${dangerRounded}% Calzada`;
+      document.getElementById('summaryCiclo30Pct').textContent = `🟣 ${ciclo30Rounded}% Carretera 30`;
+      document.getElementById('summaryDangerPct').textContent = `🔴 ${dangerRounded}% Carretera legal (≤50)`;
 
       const otherLabel = document.getElementById('summaryOtherPct');
       if (otherRounded > 0 || prohibitedRounded > 0) {
@@ -4763,7 +4764,7 @@
         pill.style.borderColor = 'rgba(197, 0, 255, 0.65)';
         pill.style.color = '#f0abfc';
       } else if (styleInfo.category === 'danger') {
-        pill.textContent = '🔴 Vas por: 3º Calzada con coches';
+        pill.textContent = '🔴 Vas por: 3º Carretera legal (≤50 km/h, carril derecho)';
         pill.style.background = 'rgba(231, 76, 60, 0.22)';
         pill.style.borderColor = 'rgba(231, 76, 60, 0.65)';
         pill.style.color = '#fca5a5';
