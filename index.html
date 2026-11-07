@@ -1798,7 +1798,7 @@
               </div>
             </label>
             <label class="switch">
-              <input type="checkbox" id="prohibitedZonesToggle" checked />
+              <input type="checkbox" id="prohibitedZonesToggle" />
               <span class="slider" style="background-color:rgba(239,68,68,0.5);"></span>
             </label>
           </div>
@@ -2193,20 +2193,22 @@
       [[41.62652,-4.69935],[41.6261,-4.69965],[41.62452,-4.69845],[41.62286,-4.69708],[41.62129,-4.69581],[41.62093,-4.69533]]
     ];
 
-    // Zonas y Túneles prohibidos según la Ordenanza de Valladolid (VMP y Ciclos)
+    // Zonas y Túneles prohibidos según la Ordenanza de Valladolid (Trazados y puntos exactos)
     const PROHIBITED_VALLADOLID_AREAS = [
       {
         id: 'tunel_labradores',
         name: 'Túnel de Labradores',
         type: 'tunnel',
-        scope: 'scooter_strict', // Prohibido patinetes (VMP), bicis con precaución
-        desc: 'Prohibida la circulación de patinetes (VMP). Bicis solo con alumbrado reglamentario y paso peatonal a pie.',
-        center: [41.6445, -4.7210],
+        scope: 'scooter_strict', // Prohibido patinetes (VMP)
+        desc: 'Paso inferior bajo ferrocarril prohibido para patinetes (VMP). Bicis con luz obligatoria o a pie por acera.',
+        center: [41.6441, -4.7209],
+        line: [[41.6447, -4.7214], [41.6436, -4.7204]], // Eje exacto del túnel bajo vías
+        radiusMeters: 40,
         polygon: [
-          [41.6455, -4.7222],
-          [41.6452, -4.7200],
-          [41.6436, -4.7198],
-          [41.6439, -4.7220]
+          [41.6448, -4.7216],
+          [41.6445, -4.7210],
+          [41.6434, -4.7202],
+          [41.6436, -4.7208]
         ]
       },
       {
@@ -2214,13 +2216,15 @@
         name: 'Túnel de Panaderos',
         type: 'tunnel',
         scope: 'scooter_strict',
-        desc: 'Paso inferior rodado prohibido para patinetes (VMP). Los ciclistas deben usar el paso habilitado.',
-        center: [41.6465, -4.7210],
+        desc: 'Paso inferior rodado bajo vías prohibido para patinetes (VMP).',
+        center: [41.6436, -4.7175],
+        line: [[41.6442, -4.7183], [41.6430, -4.7168]],
+        radiusMeters: 38,
         polygon: [
-          [41.6474, -4.7224],
-          [41.6471, -4.7198],
-          [41.6456, -4.7196],
-          [41.6459, -4.7222]
+          [41.6443, -4.7185],
+          [41.6440, -4.7180],
+          [41.6429, -4.7165],
+          [41.6432, -4.7170]
         ]
       },
       {
@@ -2228,98 +2232,64 @@
         name: 'Paso inferior Andrómeda / Nochevieja',
         type: 'tunnel',
         scope: 'scooter_strict',
-        desc: 'Túnel bajo el ferrocarril prohibido para patinetes VMP.',
+        desc: 'Paso subterráneo bajo vías de alta velocidad prohibido para patinetes VMP.',
         center: [41.6621, -4.7135],
+        line: [[41.6626, -4.7142], [41.6616, -4.7128]],
+        radiusMeters: 38,
         polygon: [
-          [41.6630, -4.7148],
-          [41.6630, -4.7122],
-          [41.6612, -4.7122],
-          [41.6612, -4.7148]
+          [41.6627, -4.7144],
+          [41.6624, -4.7140],
+          [41.6614, -4.7126],
+          [41.6617, -4.7130]
         ]
       },
       {
         id: 'tunel_san_agustin',
-        name: 'Paso deprimido Glorieta San Agustín / N-601',
+        name: 'Paso deprimido N-601 / Glorieta San Agustín',
         type: 'tunnel',
-        scope: 'all_strict', // Prohibido VMP y bicis (calzada rápida / túnel)
-        desc: 'Vía interurbana y paso deprimido prohibido para patinetes (VMP).',
+        scope: 'all_strict', // Prohibido VMP y bicis
+        desc: 'Calzada rápida deprimida y acceso interurbano prohibido para patinetes VMP.',
         center: [41.6180, -4.7195],
+        line: [[41.6190, -4.7198], [41.6170, -4.7192]],
+        radiusMeters: 45,
         polygon: [
-          [41.6195, -4.7215],
-          [41.6195, -4.7175],
-          [41.6165, -4.7175],
-          [41.6165, -4.7215]
+          [41.6192, -4.7202],
+          [41.6190, -4.7194],
+          [41.6168, -4.7188],
+          [41.6170, -4.7196]
         ]
       },
       {
         id: 'parque_campo_grande',
-        name: 'Parque del Campo Grande',
+        name: 'Parque del Campo Grande (Interior)',
         type: 'park',
         scope: 'scooter_strict',
-        desc: 'Prohibida la circulación de patinetes en el interior de parques. Debes desmontar y cruzar a pie.',
+        desc: 'Parque histórico y ajardinado: prohibido circular en patinete por paseos interiores. Debes desmontar y cruzar a pie.',
         center: [41.6458, -4.7308],
+        line: null,
+        radiusMeters: 130,
         polygon: [
-          [41.6488, -4.7297],
-          [41.6450, -4.7275],
-          [41.6418, -4.7315],
-          [41.6442, -4.7335],
-          [41.6475, -4.7318]
-        ]
-      },
-      {
-        id: 'parque_moreras',
-        name: 'Parque de las Moreras (Paseo Interior Peatonal)',
-        type: 'park',
-        scope: 'pedestrian_walk',
-        desc: 'Paseo interior peatonal. Si vas por la acera o jardines interiores, debes circular a pie.',
-        center: [41.6572, -4.7331],
-        polygon: [
-          [41.6592, -4.7348],
-          [41.6592, -4.7315],
-          [41.6552, -4.7315],
-          [41.6552, -4.7348]
+          [41.6482, -4.7301],
+          [41.6450, -4.7282],
+          [41.6428, -4.7314],
+          [41.6444, -4.7328],
+          [41.6472, -4.7314]
         ]
       },
       {
         id: 'calle_santiago',
-        name: 'Calle Santiago (Eje Peatonal Central)',
+        name: 'Calle Santiago (Eje Peatonal Plaza Zorrilla ↔ Plaza Mayor)',
         type: 'pedestrian',
         scope: 'pedestrian_walk',
-        desc: 'Zona peatonal: patinetes prohibidos montados. En bicicleta prohibido circular de 7:30 a 11:00 (carga y descarga); el resto del día prioridad peatonal estricta a paso de hombre.',
-        center: [41.6508, -4.7275],
+        desc: 'Eje comercial peatonal: patinetes prohibidos montados (a pie). En bicicleta prohibido de 7:30 a 11:00 (carga y descarga); el resto del día a paso de hombre respetando a viandantes.',
+        center: [41.6503, -4.7288],
+        line: [[41.6478, -4.7297], [41.6520, -4.7285]], // Trazado exacto de la calle
+        radiusMeters: 22,
         polygon: [
-          [41.6520, -4.7285],
-          [41.6520, -4.7265],
-          [41.6496, -4.7265],
-          [41.6496, -4.7285]
-        ]
-      },
-      {
-        id: 'autovia_va30_sur',
-        name: 'Autovía de Circunvalación VA-30 (Sur)',
-        type: 'highway',
-        scope: 'all_strict',
-        desc: 'Autovía interurbana. Prohibida terminantemente la circulación de patinetes VMP y ciclos.',
-        center: [41.6050, -4.7050],
-        polygon: [
-          [41.6080, -4.7120],
-          [41.6080, -4.6980],
-          [41.6020, -4.6980],
-          [41.6020, -4.7120]
-        ]
-      },
-      {
-        id: 'autovia_a62_oeste',
-        name: 'Autovía de Castilla A-62 (Oeste)',
-        type: 'highway',
-        scope: 'all_strict',
-        desc: 'Autovía estatal interurbana. Prohibida totalmente la circulación de patinetes VMP.',
-        center: [41.6620, -4.7600],
-        polygon: [
-          [41.6700, -4.7680],
-          [41.6700, -4.7520],
-          [41.6540, -4.7520],
-          [41.6540, -4.7680]
+          [41.6479, -4.7300],
+          [41.6521, -4.7288],
+          [41.6519, -4.7282],
+          [41.6477, -4.7294]
         ]
       }
     ];
@@ -3636,39 +3606,56 @@
 
       PROHIBITED_VALLADOLID_AREAS.forEach((zone) => {
         const isTunnel = zone.type === 'tunnel';
-        const isHighway = zone.type === 'highway';
-        const color = isHighway ? '#991b1b' : (isTunnel ? '#ef4444' : '#f97316');
+        const color = isTunnel ? '#ef4444' : '#f97316';
 
-        const poly = L.polygon(zone.polygon, {
-          color,
-          weight: 2,
-          dashArray: '4, 4',
-          fillColor: color,
-          fillOpacity: 0.28
-        }).addTo(state.prohibitedZonesLayer);
+        // 1. Si tiene trazado lineal (eje exacto del túnel o calle peatonal), pintar línea precisa
+        if (Array.isArray(zone.line)) {
+          const polyline = L.polyline(zone.line, {
+            color,
+            weight: 5,
+            dashArray: '6, 6',
+            opacity: 0.85
+          }).addTo(state.prohibitedZonesLayer);
 
-        poly.bindPopup(`
-          <div style="font-size:0.82rem;line-height:1.35;">
-            <strong style="color:${color};">🚫 ${zone.name}</strong><br>
-            <span style="font-size:0.75rem;color:#cbd5e1;">${zone.desc}</span><br>
-            <small style="color:#94a3b8;">⚖️ Ordenanza Movilidad Valladolid</small>
-          </div>
-        `);
+          polyline.bindPopup(`
+            <div style="font-size:0.82rem;line-height:1.35;">
+              <strong style="color:${color};">${isTunnel ? '🚇' : '🚶'} ${zone.name}</strong><br>
+              <span style="font-size:0.75rem;color:#cbd5e1;">${zone.desc}</span><br>
+              <small style="color:#94a3b8;">⚖️ Ordenanza Movilidad Valladolid</small>
+            </div>
+          `);
+        } else if (Array.isArray(zone.polygon)) {
+          // Solo para parques interiores: perímetro fino y transparente para no tapar el mapa
+          const poly = L.polygon(zone.polygon, {
+            color,
+            weight: 1.5,
+            dashArray: '4, 4',
+            fillColor: color,
+            fillOpacity: 0.12
+          }).addTo(state.prohibitedZonesLayer);
 
-        // Marcador con icono de aviso
-        const iconHtml = `<div style="background:${color};color:#fff;border-radius:999px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;box-shadow:0 2px 8px rgba(0,0,0,0.5);border:1.5px solid #fff;">${isTunnel ? '🚇' : (isHighway ? '⛔' : '🚷')}</div>`;
+          poly.bindPopup(`
+            <div style="font-size:0.82rem;line-height:1.35;">
+              <strong style="color:${color};">🌳 ${zone.name}</strong><br>
+              <span style="font-size:0.75rem;color:#cbd5e1;">${zone.desc}</span>
+            </div>
+          `);
+        }
+
+        // 2. Icono compacto de señalización en el punto exacto
+        const iconHtml = `<div style="background:${color};color:#fff;border-radius:999px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;box-shadow:0 2px 6px rgba(0,0,0,0.45);border:1.5px solid #fff;">${isTunnel ? '🚇' : '🚶'}</div>`;
         const marker = L.marker(zone.center, {
           icon: L.divIcon({
             className: '',
             html: iconHtml,
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
+            iconSize: [22, 22],
+            iconAnchor: [11, 11]
           })
         }).addTo(state.prohibitedZonesLayer);
 
         marker.bindPopup(`
           <div style="font-size:0.82rem;">
-            <strong style="color:${color};">🚫 ${zone.name}</strong><br>
+            <strong style="color:${color};">${isTunnel ? '🚇' : '🚶'} ${zone.name}</strong><br>
             <span style="font-size:0.75rem;">${zone.desc}</span>
           </div>
         `);
@@ -4221,14 +4208,43 @@
           if (styleInfo.category === 'prohibited') hasProhibitedSegment = true;
           if (styleInfo.walkRequired) hasWalkSegment = true;
 
+          // Dibujar sombra / aura blanca para tramos peatonales a pie para máxima visibilidad y contraste
+          if (styleInfo.walkRequired && styleInfo.category !== 'prohibited') {
+            L.polyline(segmentCoords, {
+              color: '#ffffff',
+              weight: 9,
+              opacity: 0.55,
+              lineCap: 'round',
+              lineJoin: 'round'
+            }).addTo(state.routeLayerGroup);
+          }
+
           const polyline = L.polyline(segmentCoords, {
             color: styleInfo.color,
-            weight: styleInfo.category === 'prohibited' ? 8 : 6,
-            dashArray: styleInfo.category === 'prohibited' ? '5, 5' : (styleInfo.walkRequired ? '4, 6' : undefined),
-            opacity: 0.94,
+            weight: styleInfo.category === 'prohibited' ? 8 : (styleInfo.walkRequired ? 6 : 6),
+            dashArray: styleInfo.category === 'prohibited' ? '6, 6' : (styleInfo.walkRequired ? '6, 8' : undefined),
+            opacity: 0.96,
             lineCap: 'round',
             lineJoin: 'round'
           }).addTo(state.routeLayerGroup);
+
+          // Si es un tramo a pie o prohibido, poner un pequeño icono distintivo en el centro del tramo
+          if (styleInfo.walkRequired || styleInfo.category === 'prohibited') {
+            const midCoord = segmentCoords[Math.floor(segmentCoords.length / 2)];
+            if (midCoord) {
+              const badgeIcon = styleInfo.category === 'prohibited' ? '🚫' : '🚶';
+              const badgeHtml = `<div style="background:${styleInfo.category === 'prohibited' ? '#991b1b' : '#d97706'};color:#fff;border-radius:999px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.68rem;box-shadow:0 2px 6px rgba(0,0,0,0.5);border:1.5px solid #fff;">${badgeIcon}</div>`;
+              L.marker(midCoord, {
+                icon: L.divIcon({
+                  className: '',
+                  html: badgeHtml,
+                  iconSize: [20, 20],
+                  iconAnchor: [10, 10]
+                })
+              }).addTo(state.routeLayerGroup)
+                .bindPopup(`<strong>${badgeIcon} ${styleInfo.label}</strong><br><small>${styleInfo.walkRequired ? 'Desmontar y continuar a pie' : 'Prohibida la circulación'}</small>`);
+            }
+          }
 
           polyline.bindPopup(`<strong>${styleInfo.label}</strong><br><small>Prioridad #${styleInfo.priority} · ${styleInfo.walkRequired ? '⚠️ ¡Bajarse y cruzar a pie!' : 'Circulación rodada permitida'}</small>`);
         });
