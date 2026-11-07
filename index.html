@@ -57,6 +57,33 @@
       width: 100%;
       height: 100vh;
       z-index: 1;
+      background: #e2e8f0;
+    }
+
+    /* Botón flotante para alternar rápidamente el mapa base */
+    .quick-basemap-btn {
+      position: fixed;
+      right: 12px;
+      bottom: 210px;
+      z-index: 1000;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      color: #fff;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.2s;
+    }
+
+    .quick-basemap-btn:active {
+      transform: scale(0.92);
     }
 
     /* Notificaciones / Alertas en pantalla */
@@ -1121,12 +1148,12 @@
         </div>
 
         <!-- Selector de Mapa Base -->
-        <div class="routes-section-title">Mapa Base Cartográfico</div>
+        <div class="routes-section-title">Mapa Base en Tiempo Real</div>
         <div class="basemap-grid">
-          <button type="button" class="basemap-btn active" data-basemap="voyager">🗺️ Claro</button>
+          <button type="button" class="basemap-btn active" data-basemap="google">🗺️ Google</button>
+          <button type="button" class="basemap-btn" data-basemap="google_sat">🛰️ Satélite</button>
+          <button type="button" class="basemap-btn" data-basemap="osm">🚲 OSM</button>
           <button type="button" class="basemap-btn" data-basemap="dark">🌙 Oscuro</button>
-          <button type="button" class="basemap-btn" data-basemap="cyclosm">🚲 CyclOSM</button>
-          <button type="button" class="basemap-btn" data-basemap="sat">🛰️ Satélite</button>
         </div>
       </div>
 
@@ -1160,6 +1187,11 @@
       </div>
     </div>
   </section>
+
+  <!-- Botón flotante de alternancia rápida de mapa base -->
+  <button type="button" id="quickBasemapToggleBtn" class="quick-basemap-btn" title="Alternar Mapa Callejero / Satélite">
+    <span id="quickBasemapIcon">🛰️</span>
+  </button>
 
   <!-- Mapa Principal -->
   <main id="map"></main>
@@ -1394,25 +1426,70 @@
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     const BASEMAPS = {
-      voyager: {
-        url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-        options: { attribution: '&copy; OpenStreetMap &copy; CARTO | GISAVA Ayto. Valladolid', subdomains: 'abcd', maxZoom: 20 }
+      google: {
+        name: 'Google Maps Callejero',
+        icon: '🛰️',
+        url: 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+        options: { attribution: '&copy; Google Maps | Valladolid en tiempo real', subdomains: ['0', '1', '2', '3'], maxZoom: 21 }
+      },
+      google_sat: {
+        name: 'Google Maps Satélite con Calles',
+        icon: '🚲',
+        url: 'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+        options: { attribution: '&copy; Google Maps Satélite | Valladolid en tiempo real', subdomains: ['0', '1', '2', '3'], maxZoom: 21 }
+      },
+      osm: {
+        name: 'OpenStreetMap Estándar',
+        icon: '🌙',
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        options: { attribution: '&copy; OpenStreetMap | Biciadolid', subdomains: ['a', 'b', 'c'], maxZoom: 19 }
       },
       dark: {
+        name: 'Modo Oscuro CartoDB',
+        icon: '🗺️',
         url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-        options: { attribution: '&copy; OpenStreetMap &copy; CARTO | GISAVA Ayto. Valladolid', subdomains: 'abcd', maxZoom: 20 }
-      },
-      cyclosm: {
-        url: 'https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
-        options: { attribution: '&copy; OpenStreetMap &copy; CyclOSM | GISAVA', maxZoom: 20 }
-      },
-      sat: {
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        options: { attribution: '&copy; Esri &copy; IGN PNOA Valladolid', maxZoom: 19 }
+        options: { attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 20 }
       }
     };
 
-    state.baseTileLayer = L.tileLayer(BASEMAPS.voyager.url, BASEMAPS.voyager.options).addTo(map);
+    let currentBasemapKey = 'google';
+
+    function setBasemap(key, showToastMsg = true) {
+      const cfg = BASEMAPS[key];
+      if (!cfg) return;
+
+      if (state.baseTileLayer) {
+        map.removeLayer(state.baseTileLayer);
+      }
+
+      state.baseTileLayer = L.tileLayer(cfg.url, cfg.options).addTo(map);
+      state.baseTileLayer.bringToBack();
+      currentBasemapKey = key;
+
+      // Actualizar botón flotante de acceso directo
+      const quickBtn = document.getElementById('quickBasemapIcon');
+      if (quickBtn) {
+        quickBtn.textContent = cfg.icon;
+      }
+
+      // Actualizar botones de la pestaña de capas
+      document.querySelectorAll('.basemap-btn').forEach((b) => {
+        b.classList.toggle('active', b.dataset.basemap === key);
+      });
+
+      if (showToastMsg) {
+        showToast(`Mapa de fondo cambiado: ${cfg.name}`, 'info', 2200);
+      }
+    }
+
+    // Inicializar mapa con Google Maps por defecto
+    setBasemap('google', false);
+
+    // Botón flotante para alternar rápidamente entre Google Maps Callejero, Satélite y OSM
+    document.getElementById('quickBasemapToggleBtn').addEventListener('click', () => {
+      const nextKey = currentBasemapKey === 'google' ? 'google_sat' : (currentBasemapKey === 'google_sat' ? 'osm' : 'google');
+      setBasemap(nextKey, true);
+    });
 
     // Grupos de capas ordenados
     state.gisavaCyclewaysLayer = L.layerGroup().addTo(map);
@@ -1424,17 +1501,10 @@
     state.bikiLayer = L.layerGroup();
     state.routeLayerGroup = L.layerGroup().addTo(map);
 
-    // Cambiar mapa base
+    // Cambiar mapa base desde la pestaña
     document.querySelectorAll('.basemap-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const key = btn.dataset.basemap;
-        const cfg = BASEMAPS[key];
-        if (!cfg) return;
-        document.querySelectorAll('.basemap-btn').forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-        map.removeLayer(state.baseTileLayer);
-        state.baseTileLayer = L.tileLayer(cfg.url, cfg.options).addTo(map);
-        state.baseTileLayer.bringToBack();
+        setBasemap(btn.dataset.basemap, true);
       });
     });
 
@@ -1517,6 +1587,7 @@
       const isCollapsed = topPanel.classList.toggle('collapsed');
       togglePanelText.textContent = isCollapsed ? 'Controles' : 'Ocultar';
       togglePanelIcon.textContent = isCollapsed ? '▼' : '▲';
+      setTimeout(() => map.invalidateSize(), 260);
     });
 
     /*************************************************************************
@@ -2538,6 +2609,11 @@
     updateApiKeyUI();
     buildPresetRoutesCatalog();
     loadGisavaOfficialCycleways();
+
+    // Asegurar renderizado completo de teselas en móvil y cambio de orientación
+    window.addEventListener('resize', () => map.invalidateSize());
+    window.addEventListener('orientationchange', () => setTimeout(() => map.invalidateSize(), 200));
+    setTimeout(() => map.invalidateSize(), 250);
   </script>
 </body>
 </html>
