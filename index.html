@@ -627,7 +627,7 @@
       border-color: rgba(56, 189, 248, 0.5);
     }
 
-    /* Selector de Tipo de Ruta: Segura (Carril Bici) vs Más Rápida */
+    /* Selector de Tipo de Ruta: Segura (Carril Bici) vs Ciclocarril 30 vs Más Rápida */
     .route-mode-container {
       background: rgba(15, 23, 42, 0.65);
       border: 1px solid var(--border-color);
@@ -643,22 +643,22 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 4px;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 600;
       color: var(--text-muted);
     }
 
     .route-mode-selector {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
     }
 
     .route-mode-btn {
       background: rgba(30, 41, 59, 0.7);
       border: 1px solid var(--border-color);
       border-radius: 9px;
-      padding: 7px 6px;
+      padding: 6px 4px;
       color: var(--text-muted);
       cursor: pointer;
       display: flex;
@@ -680,18 +680,37 @@
       box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
     }
 
+    .route-mode-btn[data-mode="ciclo30"].active {
+      background: rgba(197, 0, 255, 0.22);
+      border-color: #d946ef;
+      color: #fdf4ff;
+      box-shadow: 0 0 10px rgba(217, 70, 239, 0.3);
+    }
+
     .route-mode-title {
-      font-size: 0.76rem;
+      font-size: 0.72rem;
       font-weight: 700;
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
+      white-space: nowrap;
     }
 
     .route-mode-desc {
-      font-size: 0.64rem;
-      opacity: 0.8;
+      font-size: 0.6rem;
+      opacity: 0.85;
       font-weight: 400;
+      line-height: 1.15;
+    }
+
+    .priority-rule-bar {
+      font-size: 0.63rem;
+      color: #cbd5e1;
+      background: rgba(30, 41, 59, 0.75);
+      border-radius: 6px;
+      padding: 3px 6px;
+      text-align: center;
+      border: 1px solid rgba(148, 163, 184, 0.15);
     }
 
     /* Catálogo de Rutas GEOCyL y Plano Ayuntamiento */
@@ -878,12 +897,15 @@
 
     .safety-labels {
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
-      font-size: 0.74rem;
+      gap: 4px 8px;
+      font-size: 0.71rem;
       font-weight: 600;
     }
 
     .pct-safe { color: var(--green-safe); }
+    .pct-ciclo30 { color: #d946ef; }
     .pct-danger { color: var(--red-danger); }
     .pct-other { color: var(--orange-other); }
 
@@ -902,8 +924,9 @@
     }
 
     .seg-safe { background: var(--green-safe); }
-    .seg-other { background: var(--orange-other); }
+    .seg-ciclo30 { background: var(--gisava-ciclo); }
     .seg-danger { background: var(--red-danger); }
+    .seg-other { background: var(--orange-other); }
 
     /* Leyenda de colores interactiva */
     .legend-header {
@@ -1137,21 +1160,28 @@
           👆 Toca cualquier punto del mapa para fijar el <strong id="mapPickModeName">Origen (A)</strong>
         </div>
 
-        <!-- Selector de Tipo de Ruta: Priorizar Carril Bici vs Ruta Rápida -->
+        <!-- Selector de Tipo de Ruta: Mejor/Segura vs Ciclocarril 30 vs Más Rápida -->
         <div class="route-mode-container">
           <div class="route-mode-header">
-            <span>⚙️ Tipo de cálculo</span>
-            <span id="routeModeDescBadge" style="color:#38bdf8;font-weight:600;">Máxima Seguridad</span>
+            <span>⚙️ Modo de circulación</span>
+            <span id="routeModeDescBadge" style="color:#38bdf8;font-weight:600;">Carril Bici › Ciclo 30</span>
           </div>
           <div class="route-mode-selector">
             <button type="button" class="route-mode-btn active" id="btnModeSafe" data-mode="safe">
-              <span class="route-mode-title">🛡️ Carril Bici</span>
-              <span class="route-mode-desc">Prioriza vías seguras</span>
+              <span class="route-mode-title">🛡️ Mejor / Segura</span>
+              <span class="route-mode-desc">1º Carril Bici › 2º Ciclo 30</span>
+            </button>
+            <button type="button" class="route-mode-btn" id="btnModeCiclo30" data-mode="ciclo30">
+              <span class="route-mode-title">🟣 Ciclocarril 30</span>
+              <span class="route-mode-desc">Vías 30 km/h + Carril Bici</span>
             </button>
             <button type="button" class="route-mode-btn" id="btnModeFast" data-mode="fast">
               <span class="route-mode-title">⚡ Más Rápida</span>
               <span class="route-mode-desc">Trayecto más directo</span>
             </button>
+          </div>
+          <div class="priority-rule-bar">
+            Prioridad seguridad: <strong>1º Carril bici</strong> › <strong>2º Ciclocarril 30</strong> › <strong>3º Carretera</strong> › <strong>4º Acera</strong>
           </div>
         </div>
 
@@ -1347,47 +1377,53 @@
 
       <div class="safety-breakdown">
         <div class="safety-labels">
-          <span class="pct-safe" id="summarySafePct">🟢 0% Seguro (Carril/Senda)</span>
-          <span class="pct-other" id="summaryOtherPct" style="display:none;">🟠 0% Otros</span>
-          <span class="pct-danger" id="summaryDangerPct">🔴 0% Calzada</span>
+          <span class="pct-safe" id="summarySafePct">🟢 0% Carril bici</span>
+          <span class="pct-ciclo30" id="summaryCiclo30Pct">🟣 0% Ciclocarril 30</span>
+          <span class="pct-danger" id="summaryDangerPct">🔴 0% Carretera</span>
+          <span class="pct-other" id="summaryOtherPct" style="display:none;">🟠 0% Acera</span>
         </div>
         <div class="progress-bar">
           <div class="progress-segment seg-safe" id="barSafe" style="width: 0%"></div>
-          <div class="progress-segment seg-other" id="barOther" style="width: 0%"></div>
+          <div class="progress-segment seg-ciclo30" id="barCiclo30" style="width: 0%"></div>
           <div class="progress-segment seg-danger" id="barDanger" style="width: 0%"></div>
+          <div class="progress-segment seg-other" id="barOther" style="width: 0%"></div>
         </div>
       </div>
     </div>
 
-    <!-- Leyenda de Peligrosidad por Tipo de Vía -->
+    <!-- Leyenda de Peligrosidad y Prioridad por Tipo de Vía -->
     <div class="legend-header" id="legendHeader">
-      <span class="legend-title">🗺️ Leyenda del Mapa</span>
-      <span class="legend-toggle-btn" id="legendToggleText">Ver detalles</span>
+      <span class="legend-title">🗺️ Leyenda (Orden de Prioridad)</span>
+      <span class="legend-toggle-btn" id="legendToggleText">Ver capas fondo</span>
     </div>
 
-    <!-- Leyenda principal de la Ruta activa -->
+    <!-- Leyenda principal de la Ruta activa (1º Carril bici > 2º Ciclocarril 30 > 3º Carretera > 4º Acera) -->
     <div class="legend-row">
-      <div class="legend-item" title="Tramos seguros para patinete y bicicleta">
+      <div class="legend-item" title="1ª Prioridad: Carril bici segregado o senda ciclista">
         <span class="legend-swatch" style="background: #2ecc71;"></span>
-        <span>Ruta: Carril Bici / Seguro</span>
+        <span>1º Carril Bici</span>
       </div>
-      <div class="legend-item" title="Calzada compartida con coches">
+      <div class="legend-item" title="2ª Prioridad: Ciclocarril 30 km/h con preferencia ciclista">
+        <span class="legend-swatch" style="background: #c500ff;"></span>
+        <span>2º Ciclocarril 30 km/h</span>
+      </div>
+      <div class="legend-item" title="3ª Prioridad: Calzada / Carretera con tráfico general">
         <span class="legend-swatch" style="background: #e74c3c;"></span>
-        <span>Ruta: Calzada coches</span>
+        <span>3º Carretera</span>
       </div>
-      <div class="legend-item" title="Ciclocarril o vía compartida">
+      <div class="legend-item" title="4ª Prioridad (Última opción): Acera peatonal">
         <span class="legend-swatch" style="background: #f39c12;"></span>
-        <span>Ruta: Ciclocarril / Mixto</span>
+        <span>4º Acera</span>
       </div>
     </div>
 
     <!-- Panel desplegable con las marcas de fondo oficiales del Ayuntamiento y puntos de interés -->
     <div class="legend-details-panel" id="legendDetailsPanel">
-      <div style="font-weight:700;color:#38bdf8;margin-bottom:2px;">Red de fondo y Puntos Oficiales:</div>
+      <div style="font-weight:700;color:#38bdf8;margin-bottom:2px;">Capas de fondo del Ayuntamiento (GISAVA):</div>
       <div class="legend-details-grid">
-        <div class="legend-item"><span class="legend-swatch" style="background: #00a884;"></span>Verde oscuro: Carril exclusivo Ayto.</div>
-        <div class="legend-item"><span class="legend-swatch" style="background: #c500ff; border-top: 2px dashed #c500ff; height:0;"></span>Morado discontinuo: Ciclocarril 30</div>
-        <div class="legend-item"><span class="legend-swatch" style="background: #ffaa00;"></span>Naranja: Acera-bici / Compartido</div>
+        <div class="legend-item"><span class="legend-swatch" style="background: #00a884;"></span>Verde oscuro: Red Carril Bici Ayto.</div>
+        <div class="legend-item"><span class="legend-swatch" style="background: #c500ff; border-top: 2px dashed #c500ff; height:0;"></span>Morado discontinuo: Red Ciclocarril 30</div>
+        <div class="legend-item"><span class="legend-swatch" style="background: #ffaa00;"></span>Ámbar fino: Acera-bici / Compartido</div>
         <div class="legend-item"><span class="legend-swatch" style="background: #267300; border-top: 2px dashed #267300; height:0;"></span>Verde oliva: Conexión Alfoz</div>
         <div class="legend-item"><span class="poi-badge poi-biki" style="width:16px;height:16px;font-size:0.55rem;border-width:1px;">B</span>Rojo B: Estación BIKI</div>
         <div class="legend-item"><span class="poi-badge poi-parkibici" style="width:16px;height:16px;font-size:0.55rem;border-width:1px;">P</span>Verde P: PARKIBICI cerrado</div>
@@ -2476,16 +2512,20 @@
      * 5. RESUMEN DE LA RUTA
      *************************************************************************/
     function getWaytypeStyle(waytypeValue) {
-      // Verde (#2ecc71 - Seguro / Carril Bici o Peatonal): 6 (Cycleway), 5 (Track), 7 (Path), 8 (Footway)
-      if ([5, 6, 7, 8].includes(waytypeValue)) {
-        return { color: '#2ecc71', category: 'safe', label: 'Carril bici / Zona segura' };
+      // 1ª PRIORIDAD: Verde (#2ecc71 - Carril Bici / Senda ciclista segregada): 6 (Cycleway), 5 (Track), 7 (Path)
+      if ([5, 6, 7].includes(waytypeValue)) {
+        return { color: '#2ecc71', category: 'safe', priority: 1, label: '1º Carril bici / Vía ciclista segregada' };
       }
-      // Rojo (#e74c3c - Cuidado / Carretera con coches): 1 (State Road), 2 (Road), 3 (Street)
-      if ([1, 2, 3].includes(waytypeValue)) {
-        return { color: '#e74c3c', category: 'danger', label: 'Carretera / Calle con tráfico' };
+      // 2ª PRIORIDAD: Morado (#c500ff - Ciclocarril 30 km/h / Calle pacificada 30): 10
+      if (waytypeValue === 10) {
+        return { color: '#c500ff', category: 'ciclo30', priority: 2, label: '2º Ciclocarril 30 km/h (Preferencia ciclista)' };
       }
-      // Naranja (#f39c12 - Otros): Ciclocarril 30 / Vía compartida
-      return { color: '#f39c12', category: 'other', label: 'Ciclocarril / Vía compartida' };
+      // 3ª PRIORIDAD: Rojo (#e74c3c - Carretera / Calzada con coches): 1 (State Road), 2 (Road), 3 (Street), 4
+      if ([1, 2, 3, 4].includes(waytypeValue)) {
+        return { color: '#e74c3c', category: 'danger', priority: 3, label: '3º Carretera / Calzada con tráfico' };
+      }
+      // 4ª PRIORIDAD (Última opción): Naranja (#f39c12 - Acera / Peatonal): 8 (Footway), 9 (Steps) u otros
+      return { color: '#f39c12', category: 'other', priority: 4, label: '4º Acera / Zona peatonal (Última opción)' };
     }
 
     // Decodificador de geometría Polyline6 (precisión 1e-6 de Valhalla OSM) -> Array de [lon, lat]
@@ -2518,41 +2558,175 @@
       return coordinates;
     }
 
-    // Comprueba si un punto [lat, lon] coincide con la red oficial de carriles bici GISAVA (~22 metros)
+    // Comprueba si un punto [lat, lon] coincide con la red oficial de carriles bici y ciclocarriles GISAVA (~22 metros)
     function matchGisavaWaytype(lat, lon) {
       if (!state.gisavaPolylines || state.gisavaPolylines.length === 0) return null;
       const thresholdDegSq = 0.00022 * 0.00022;
+      let foundCiclo30 = false;
       for (const item of state.gisavaPolylines) {
         const pts = item.coords;
         for (let i = 0; i < pts.length; i++) {
           const dLat = lat - pts[i][0];
           const dLon = (lon - pts[i][1]) * 0.747; // Corrección cos(41.65°)
           if (dLat * dLat + dLon * dLon <= thresholdDegSq) {
-            return item.waytype; // 6 = Carril bici segregado (Verde), 10 = Ciclocarril (Naranja)
+            if (item.waytype === 6) return 6; // Prioridad 1: Carril bici segregado (Verde)
+            if (item.waytype === 10) foundCiclo30 = true; // Prioridad 2: Ciclocarril 30 km/h (Morado)
           }
         }
       }
-      return null;
+      return foundCiclo30 ? 10 : null;
+    }
+
+    // Evalúa el coste ponderado de una ruta según la jerarquía:
+    // 1º Carril Bici > 2º Ciclocarril 30 km/h > 3º Carretera > 4º Acera
+    function scoreRouteByHierarchy(coords, waytypeValues, mode) {
+      let weightedCost = 0;
+      const weights = mode === 'ciclo30'
+        ? { safe: 1.05, ciclo30: 0.95, danger: 2.75, other: 6.0 }
+        : (mode === 'fast'
+            ? { safe: 1.0, ciclo30: 1.05, danger: 1.15, other: 4.8 }
+            : { safe: 1.0, ciclo30: 1.4, danger: 2.6, other: 5.5 }); // 'safe': Carril bici (1.0) < Ciclocarril 30 (1.4) < Carretera (2.6) < Acera (5.5)
+
+      waytypeValues.forEach(([s, e, val]) => {
+        let segDist = 0;
+        for (let i = s; i < e && i < coords.length - 1; i++) {
+          const p1 = L.latLng(coords[i][1], coords[i][0]);
+          const p2 = L.latLng(coords[i + 1][1], coords[i + 1][0]);
+          segDist += p1.distanceTo(p2);
+        }
+        const { category } = getWaytypeStyle(val);
+        weightedCost += segDist * (weights[category] || 2.6);
+      });
+      return weightedCost;
+    }
+
+    // Clasifica un trazado de Valhalla cruzando trace_attributes + Red Oficial GISAVA (Carril bici y Ciclocarril 30)
+    async function classifyValhallaTrip(trip) {
+      const leg = trip?.legs?.[0];
+      const summary = trip?.summary;
+      const coords = decodePolyline6(leg.shape); // [lon, lat]
+      const waytypeValues = [];
+
+      try {
+        const traceRes = await fetch('https://valhalla1.openstreetmap.de/trace_attributes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            encoded_polyline: leg.shape,
+            costing: 'bicycle',
+            shape_match: 'edge_walk',
+            filters: {
+              attributes: [
+                'edge.use',
+                'edge.cycle_lane',
+                'edge.road_class',
+                'edge.begin_shape_index',
+                'edge.end_shape_index'
+              ],
+              action: 'include'
+            }
+          })
+        });
+
+        if (traceRes.ok) {
+          const traceData = await traceRes.json();
+          const edges = traceData.edges || [];
+          edges.forEach((edge) => {
+            const s = edge.begin_shape_index;
+            const e = edge.end_shape_index;
+            if (typeof s !== 'number' || typeof e !== 'number' || e <= s) return;
+
+            const use = edge.use || '';
+            const cycleLane = edge.cycle_lane || 'none';
+            const roadClass = edge.road_class || '';
+
+            // Primero comprobar si coincide con la red oficial GISAVA (Carril Bici = 6, Ciclocarril 30 = 10)
+            const midIdx = Math.floor((s + e) / 2);
+            const midPt = coords[midIdx] || coords[s];
+            const gisavaMatch = midPt ? matchGisavaWaytype(midPt[1], midPt[0]) : null;
+
+            let wVal = 3; // Por defecto 3ª prioridad: Carretera / Calzada (Rojo)
+
+            if (gisavaMatch === 6) {
+              wVal = 6; // 1ª prioridad: Carril bici oficial GISAVA
+            } else if (
+              ['cycleway', 'track', 'path', 'bridleway'].includes(use) ||
+              ['separated', 'dedicated'].includes(cycleLane)
+            ) {
+              wVal = 6; // 1ª prioridad: Carril bici / senda segregada
+            } else if (
+              gisavaMatch === 10 ||
+              cycleLane === 'shared' ||
+              ['living_street', 'service_road', 'alley'].includes(use) ||
+              roadClass === 'residential'
+            ) {
+              wVal = 10; // 2ª prioridad: Ciclocarril 30 km/h / Calle 30 pacificada
+            } else if (['footway', 'pedestrian', 'steps', 'sidewalk'].includes(use)) {
+              wVal = 8; // 4ª prioridad (Última opción): Acera peatonal
+            } else {
+              wVal = 3; // 3ª prioridad: Carretera / Calzada general
+            }
+
+            waytypeValues.push([s, e, wVal]);
+          });
+        }
+      } catch (_) {}
+
+      if (waytypeValues.length === 0 && coords.length > 1) {
+        for (let i = 0; i < coords.length - 1; i++) {
+          const midLat = (coords[i][1] + coords[i + 1][1]) / 2;
+          const midLon = (coords[i][0] + coords[i + 1][0]) / 2;
+          const wVal = matchGisavaWaytype(midLat, midLon) || 3;
+          waytypeValues.push([i, i + 1, wVal]);
+        }
+      }
+
+      return {
+        coords,
+        waytypeValues,
+        waytypeSummary: [],
+        routeSummary: {
+          distance: (summary?.length || 0) * 1000,
+          duration: summary?.time || 0
+        }
+      };
     }
 
     // Motor Ciclista Automático sin API Key (Valhalla OSM + Red Oficial GISAVA + Fallback OSRM)
+    // Respeta la jerarquía: 1º Carril bici > 2º Ciclocarril 30 km/h > 3º Carretera > 4º Acera
     async function calculateRouteKeyless(origin, destination, mode = 'safe') {
-      // 1. Valhalla OSM Bicycle Routing + Trace Attributes para clasificar cada tramo por waytype
       try {
-        const isSafe = mode === 'safe';
-        const bicycleOptions = isSafe
-          ? {
-              bicycle_type: 'Hybrid',
-              use_roads: 0.05,
-              use_tracks: 0.95,
-              use_hills: 0.2
-            }
-          : {
-              bicycle_type: 'Road',
-              use_roads: 0.85,
-              use_tracks: 0.1,
-              cycling_speed: 24.0
-            };
+        let bicycleOptions;
+        if (mode === 'safe') {
+          // Prioriza Carril Bici (1º) y Ciclocarril 30 (2º) sobre Carretera (3º), evitando Aceras (4º)
+          bicycleOptions = {
+            bicycle_type: 'Hybrid',
+            use_roads: 0.1,
+            use_tracks: 0.95,
+            use_living_streets: 0.9,
+            use_hills: 0.25,
+            cycling_speed: 19.0
+          };
+        } else if (mode === 'ciclo30') {
+          // Modo Ciclocarril 30 km/h: máxima afinidad por vías 30 km/h y carriles bici urbanos
+          bicycleOptions = {
+            bicycle_type: 'City',
+            use_roads: 0.3,
+            use_tracks: 0.85,
+            use_living_streets: 1.0,
+            use_hills: 0.3,
+            cycling_speed: 21.0
+          };
+        } else {
+          // Modo Más Rápida: trayecto directo por calzada, ciclocarril 30 y carril bici (evitando aceras)
+          bicycleOptions = {
+            bicycle_type: 'Road',
+            use_roads: 0.85,
+            use_tracks: 0.25,
+            use_living_streets: 0.75,
+            cycling_speed: 25.0
+          };
+        }
 
         const valhallaBody = {
           locations: [
@@ -2563,6 +2737,7 @@
           costing_options: {
             bicycle: bicycleOptions
           },
+          alternates: 2,
           units: 'kilometers',
           language: 'es-ES'
         };
@@ -2575,93 +2750,35 @@
 
         if (routeRes.ok) {
           const routeData = await routeRes.json();
-          const leg = routeData?.trip?.legs?.[0];
-          const summary = routeData?.trip?.summary;
+          const candidateTrips = [];
+          if (routeData?.trip?.legs?.[0]?.shape) {
+            candidateTrips.push(routeData.trip);
+          }
+          if (Array.isArray(routeData?.alternates)) {
+            routeData.alternates.forEach((alt) => {
+              if (alt?.trip?.legs?.[0]?.shape) candidateTrips.push(alt.trip);
+            });
+          }
 
-          if (leg && leg.shape) {
-            const coords = decodePolyline6(leg.shape); // [lon, lat]
-            const waytypeValues = [];
+          if (candidateTrips.length > 0) {
+            const classifiedCandidates = await Promise.all(
+              candidateTrips.map((t) => classifyValhallaTrip(t))
+            );
 
-            // Obtener atributos detallados de cada tramo (cycleway, cycle_lane, road_class)
-            try {
-              const traceRes = await fetch('https://valhalla1.openstreetmap.de/trace_attributes', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  encoded_polyline: leg.shape,
-                  costing: 'bicycle',
-                  shape_match: 'edge_walk',
-                  filters: {
-                    attributes: [
-                      'edge.use',
-                      'edge.cycle_lane',
-                      'edge.road_class',
-                      'edge.begin_shape_index',
-                      'edge.end_shape_index'
-                    ],
-                    action: 'include'
-                  }
-                })
-              });
+            // Elegir la mejor ruta candidata según la jerarquía: Carril bici > Ciclocarril 30 > Carretera > Acera
+            let bestCandidate = classifiedCandidates[0];
+            let bestScore = scoreRouteByHierarchy(bestCandidate.coords, bestCandidate.waytypeValues, mode);
 
-              if (traceRes.ok) {
-                const traceData = await traceRes.json();
-                const edges = traceData.edges || [];
-                edges.forEach((edge) => {
-                  const s = edge.begin_shape_index;
-                  const e = edge.end_shape_index;
-                  if (typeof s !== 'number' || typeof e !== 'number' || e <= s) return;
-
-                  const use = edge.use || '';
-                  const cycleLane = edge.cycle_lane || 'none';
-                  let wVal = 3; // Por defecto: Calle con tráfico (Rojo)
-
-                  if (
-                    ['cycleway', 'footway', 'path', 'track', 'pedestrian', 'bridleway'].includes(use) ||
-                    ['separated', 'dedicated'].includes(cycleLane)
-                  ) {
-                    wVal = 6; // Carril bici / Senda segura (Verde)
-                  } else if (
-                    ['living_street', 'service_road', ' driveway', 'alley'].includes(use) ||
-                    cycleLane === 'shared'
-                  ) {
-                    wVal = 10; // Ciclocarril / Vía compartida (Naranja)
-                  }
-
-                  // Cruzar también con la capa oficial GISAVA del Ayuntamiento de Valladolid
-                  if (wVal === 3) {
-                    const midIdx = Math.floor((s + e) / 2);
-                    const midPt = coords[midIdx] || coords[s];
-                    if (midPt) {
-                      const gisavaMatch = matchGisavaWaytype(midPt[1], midPt[0]);
-                      if (gisavaMatch) wVal = gisavaMatch;
-                    }
-                  }
-
-                  waytypeValues.push([s, e, wVal]);
-                });
-              }
-            } catch (_) {}
-
-            // Si trace_attributes no devolvió segmentos, clasificar tramo a tramo con GISAVA
-            if (waytypeValues.length === 0 && coords.length > 1) {
-              for (let i = 0; i < coords.length - 1; i++) {
-                const midLat = (coords[i][1] + coords[i + 1][1]) / 2;
-                const midLon = (coords[i][0] + coords[i + 1][0]) / 2;
-                const wVal = matchGisavaWaytype(midLat, midLon) || 3;
-                waytypeValues.push([i, i + 1, wVal]);
+            for (let i = 1; i < classifiedCandidates.length; i++) {
+              const cand = classifiedCandidates[i];
+              const score = scoreRouteByHierarchy(cand.coords, cand.waytypeValues, mode);
+              if (score < bestScore) {
+                bestScore = score;
+                bestCandidate = cand;
               }
             }
 
-            return {
-              coords,
-              waytypeValues,
-              waytypeSummary: [],
-              routeSummary: {
-                distance: (summary?.length || 0) * 1000,
-                duration: summary?.time || 0
-              }
-            };
+            return bestCandidate;
           }
         }
       } catch (e) {
@@ -2744,13 +2861,13 @@
         // Si el usuario configuró una ORS_API_KEY, usar OpenRouteService primero (y caer al motor gratuito si falla)
         if (apiKey) {
           try {
-            const orsProfile = state.routeMode === 'safe' ? 'cycling-regular' : 'cycling-road';
+            const orsProfile = state.routeMode === 'fast' ? 'cycling-road' : 'cycling-regular';
             const requestBody = {
               coordinates: [
                 [state.origin.lon, state.origin.lat],
                 [state.destination.lon, state.destination.lat]
               ],
-              preference: state.routeMode === 'safe' ? 'recommended' : 'fastest',
+              preference: state.routeMode === 'fast' ? 'fastest' : 'recommended',
               extra_info: ['waytype']
             };
 
@@ -2769,8 +2886,17 @@
               if (data.features && data.features.length > 0) {
                 const feature = data.features[0];
                 coords = feature.geometry.coordinates;
-                waytypeValues = feature.properties?.extras?.waytype?.values || [];
-                waytypeSummary = feature.properties?.extras?.waytype?.summary || [];
+                const rawWaytypes = feature.properties?.extras?.waytype?.values || [];
+                // Enriquecer los tramos de ORS con la red oficial de Ciclocarriles 30 km/h y Carriles Bici GISAVA
+                waytypeValues = rawWaytypes.map(([s, e, val]) => {
+                  const midIdx = Math.floor((s + e) / 2);
+                  const midPt = coords[midIdx] || coords[s];
+                  const gisavaMatch = midPt ? matchGisavaWaytype(midPt[1], midPt[0]) : null;
+                  if (gisavaMatch === 6) return [s, e, 6];
+                  if (gisavaMatch === 10 && ![5, 6, 7].includes(val)) return [s, e, 10];
+                  return [s, e, val];
+                });
+                waytypeSummary = [];
                 routeSummary = feature.properties?.summary || { distance: 0, duration: 0 };
                 usedOrs = true;
               }
@@ -2808,7 +2934,7 @@
             lineJoin: 'round'
           }).addTo(state.routeLayerGroup);
 
-          polyline.bindPopup(`<strong>${styleInfo.label}</strong><br><small>Waytype ID: ${waytypeVal}</small>`);
+          polyline.bindPopup(`<strong>${styleInfo.label}</strong><br><small>Prioridad #${styleInfo.priority} · Waytype ID: ${waytypeVal}</small>`);
         });
 
         const allLatLngs = coords.map(([lon, lat]) => [lat, lon]);
@@ -2827,13 +2953,13 @@
           togglePanelIcon.textContent = '▼';
         }
 
-        showToast('Ruta segura calculada con éxito.', 'success', 3000);
+        showToast('Ruta calculada (Prioridad: Carril Bici › Ciclo 30 › Carretera › Acera).', 'success', 3000);
       } catch (err) {
         console.error(err);
         showToast(err.message || 'Ocurrió un error al calcular la ruta.', 'error');
       } finally {
         calcBtn.disabled = false;
-        calcBtn.textContent = '⚡ Calcular ruta segura';
+        updateCalcButtonLabel(state.routeMode);
       }
     }
 
@@ -2845,57 +2971,64 @@
       document.getElementById('summaryDuration').textContent = `${durationMin} min`;
 
       let safePct = 0;
+      let ciclo30Pct = 0;
       let dangerPct = 0;
       let otherPct = 0;
 
-      if (Array.isArray(waytypeSummary) && waytypeSummary.length > 0) {
-        waytypeSummary.forEach((item) => {
-          const waytypeVal = Number(item.value);
-          const amount = Number(item.amount) || 0;
-          const { category } = getWaytypeStyle(waytypeVal);
-
-          if (category === 'safe') safePct += amount;
-          else if (category === 'danger') dangerPct += amount;
-          else otherPct += amount;
-        });
-      } else if (waytypeValues.length > 0 && coords.length > 1) {
-        let safeDist = 0, dangerDist = 0, otherDist = 0;
+      if (waytypeValues.length > 0 && coords.length > 1) {
+        let safeDist = 0, ciclo30Dist = 0, dangerDist = 0, otherDist = 0;
         waytypeValues.forEach(([s, e, val]) => {
           let segDist = 0;
-          for (let i = s; i < e; i++) {
+          for (let i = s; i < e && i < coords.length - 1; i++) {
             const p1 = L.latLng(coords[i][1], coords[i][0]);
             const p2 = L.latLng(coords[i + 1][1], coords[i + 1][0]);
             segDist += p1.distanceTo(p2);
           }
           const { category } = getWaytypeStyle(val);
           if (category === 'safe') safeDist += segDist;
+          else if (category === 'ciclo30') ciclo30Dist += segDist;
           else if (category === 'danger') dangerDist += segDist;
           else otherDist += segDist;
         });
-        const total = safeDist + dangerDist + otherDist || 1;
+        const total = safeDist + ciclo30Dist + dangerDist + otherDist || 1;
         safePct = (safeDist / total) * 100;
+        ciclo30Pct = (ciclo30Dist / total) * 100;
         dangerPct = (dangerDist / total) * 100;
         otherPct = (otherDist / total) * 100;
+      } else if (Array.isArray(waytypeSummary) && waytypeSummary.length > 0) {
+        waytypeSummary.forEach((item) => {
+          const waytypeVal = Number(item.value);
+          const amount = Number(item.amount) || 0;
+          const { category } = getWaytypeStyle(waytypeVal);
+
+          if (category === 'safe') safePct += amount;
+          else if (category === 'ciclo30') ciclo30Pct += amount;
+          else if (category === 'danger') dangerPct += amount;
+          else otherPct += amount;
+        });
       }
 
       const safeRounded = Math.round(safePct);
+      const ciclo30Rounded = Math.round(ciclo30Pct);
       const dangerRounded = Math.round(dangerPct);
-      const otherRounded = Math.max(0, 100 - safeRounded - dangerRounded);
+      const otherRounded = Math.max(0, 100 - safeRounded - ciclo30Rounded - dangerRounded);
 
-      document.getElementById('summarySafePct').textContent = `🟢 ${safeRounded}% Seguro (Carril/Senda)`;
-      document.getElementById('summaryDangerPct').textContent = `🔴 ${dangerRounded}% Calzada`;
+      document.getElementById('summarySafePct').textContent = `🟢 ${safeRounded}% Carril bici`;
+      document.getElementById('summaryCiclo30Pct').textContent = `🟣 ${ciclo30Rounded}% Ciclo 30`;
+      document.getElementById('summaryDangerPct').textContent = `🔴 ${dangerRounded}% Carretera`;
 
       const otherLabel = document.getElementById('summaryOtherPct');
       if (otherRounded > 0) {
         otherLabel.style.display = 'inline';
-        otherLabel.textContent = `🟠 ${otherRounded}% Otros`;
+        otherLabel.textContent = `🟠 ${otherRounded}% Acera`;
       } else {
         otherLabel.style.display = 'none';
       }
 
       document.getElementById('barSafe').style.width = `${safePct.toFixed(1)}%`;
-      document.getElementById('barOther').style.width = `${otherPct.toFixed(1)}%`;
+      document.getElementById('barCiclo30').style.width = `${ciclo30Pct.toFixed(1)}%`;
       document.getElementById('barDanger').style.width = `${dangerPct.toFixed(1)}%`;
+      document.getElementById('barOther').style.width = `${otherPct.toFixed(1)}%`;
 
       document.getElementById('routeSummary').classList.add('visible');
     }
@@ -2921,12 +3054,7 @@
           setOriginPoint(item.origin.lat, item.origin.lon, item.origin.label);
           setDestinationPoint(item.dest.lat, item.dest.lon, item.dest.label);
           document.querySelector('[data-tab="tabRoute"]').click();
-          if (getActiveOrsKey()) {
-            calculateRoute();
-          } else {
-            map.fitBounds(L.latLngBounds([[item.origin.lat, item.origin.lon], [item.dest.lat, item.dest.lon]]), { padding: [50, 50] });
-            showToast('Puntos A y B cargados. Pulsa "Calcular ruta segura" con tu ORS_API_KEY.', 'info');
-          }
+          calculateRoute();
         });
         urbanContainer.appendChild(card);
       });
@@ -2942,7 +3070,7 @@
           </div>
           <div class="route-preset-actions">
             <button type="button" class="btn-mini" data-action="view">Ver trazado</button>
-            <button type="button" class="btn-mini green" data-action="route">Ruta ORS</button>
+            <button type="button" class="btn-mini green" data-action="route">Calcular</button>
           </div>
         `;
 
@@ -2972,11 +3100,14 @@
 
           document.getElementById('summaryDistance').textContent = `${distKm.toFixed(2)} km`;
           document.getElementById('summaryDuration').textContent = `${estMin} min`;
-          document.getElementById('summarySafePct').textContent = '🟢 95% Senda / Vía Ciclista (GEOCyL)';
-          document.getElementById('summaryDangerPct').textContent = '🔴 5% Enlace urbano';
+          document.getElementById('summarySafePct').textContent = '🟢 95% Carril bici';
+          document.getElementById('summaryCiclo30Pct').textContent = '🟣 0% Ciclo 30';
+          document.getElementById('summaryDangerPct').textContent = '🔴 5% Carretera';
+          document.getElementById('summaryOtherPct').style.display = 'none';
           document.getElementById('barSafe').style.width = '95%';
-          document.getElementById('barOther').style.width = '0%';
+          document.getElementById('barCiclo30').style.width = '0%';
           document.getElementById('barDanger').style.width = '5%';
+          document.getElementById('barOther').style.width = '0%';
           document.getElementById('routeSummary').classList.add('visible');
 
           map.fitBounds(poly.getBounds(), { paddingTopLeft: [30, 180], paddingBottomRight: [30, 160] });
@@ -2988,7 +3119,7 @@
           showToast(`Trazado GEOCyL cargado: ${rt.name}`, 'success', 3000);
         });
 
-        // Calcular por OpenRouteService usando inicio y fin de la ruta GEOCyL
+        // Calcular ruta usando inicio y fin de la ruta GEOCyL
         card.querySelector('[data-action="route"]').addEventListener('click', () => {
           setOriginPoint(rt.start[0], rt.start[1], `Inicio: ${rt.name}`);
           setDestinationPoint(rt.end[0], rt.end[1], `Fin: ${rt.name}`);
@@ -3000,33 +3131,51 @@
       });
     }
 
-    // Selector de modo de ruta (Segura / Carril Bici vs Más Rápida)
+    function updateCalcButtonLabel(mode) {
+      const calcBtn = document.getElementById('calcRouteBtn');
+      if (!calcBtn) return;
+      if (mode === 'safe') {
+        calcBtn.textContent = '🛡️ Calcular mejor ruta (Carril Bici › Ciclo 30)';
+      } else if (mode === 'ciclo30') {
+        calcBtn.textContent = '🟣 Calcular por Ciclocarril 30 + Carril Bici';
+      } else {
+        calcBtn.textContent = '⚡ Calcular ruta más rápida';
+      }
+    }
+
+    // Selector de modo de ruta (Mejor/Segura vs Ciclocarril 30 vs Más Rápida)
     function setRouteMode(mode, recalculateIfActive = true) {
       state.routeMode = mode;
       const btnSafe = document.getElementById('btnModeSafe');
+      const btnCiclo30 = document.getElementById('btnModeCiclo30');
       const btnFast = document.getElementById('btnModeFast');
       const badge = document.getElementById('routeModeDescBadge');
-      const calcBtn = document.getElementById('calcRouteBtn');
+
+      btnSafe?.classList.toggle('active', mode === 'safe');
+      btnCiclo30?.classList.toggle('active', mode === 'ciclo30');
+      btnFast?.classList.toggle('active', mode === 'fast');
 
       if (mode === 'safe') {
-        btnSafe.classList.add('active');
-        btnFast.classList.remove('active');
         if (badge) {
-          badge.textContent = 'Máxima Seguridad';
+          badge.textContent = 'Carril Bici › Ciclo 30';
           badge.style.color = '#38bdf8';
         }
-        if (calcBtn) calcBtn.textContent = '🛡️ Calcular ruta en carril bici';
-        showToast('Modo: Priorizar carriles bici y vías seguras', 'info', 2200);
+        showToast('Modo Mejor Ruta: 1º Carril bici › 2º Ciclocarril 30 › 3º Carretera › 4º Acera', 'info', 2500);
+      } else if (mode === 'ciclo30') {
+        if (badge) {
+          badge.textContent = 'Prioridad Ciclocarril 30';
+          badge.style.color = '#e879f9';
+        }
+        showToast('Modo Ciclocarril 30 km/h: Prioriza calles 30 km/h y carriles bici', 'info', 2500);
       } else {
-        btnFast.classList.add('active');
-        btnSafe.classList.remove('active');
         if (badge) {
           badge.textContent = 'Más Rápida / Directa';
           badge.style.color = '#fbbf24';
         }
-        if (calcBtn) calcBtn.textContent = '⚡ Calcular ruta más rápida';
-        showToast('Modo: Ruta más directa y rápida', 'info', 2200);
+        showToast('Modo Más Rápida: Trayecto más directo evitando aceras', 'info', 2500);
       }
+
+      updateCalcButtonLabel(mode);
 
       // Si ya hay origen y destino fijados o ruta dibujada, recalcular automáticamente
       if (recalculateIfActive && state.origin && state.destination && state.routeLayerGroup && state.routeLayerGroup.getLayers().length > 0) {
@@ -3035,6 +3184,7 @@
     }
 
     document.getElementById('btnModeSafe')?.addEventListener('click', () => setRouteMode('safe'));
+    document.getElementById('btnModeCiclo30')?.addEventListener('click', () => setRouteMode('ciclo30'));
     document.getElementById('btnModeFast')?.addEventListener('click', () => setRouteMode('fast'));
 
     // Plegar / Desplegar detalles de la leyenda inferior
@@ -3045,7 +3195,7 @@
       legendHeader.addEventListener('click', () => {
         const isVisible = legendDetailsPanel.classList.toggle('visible');
         if (legendToggleText) {
-          legendToggleText.textContent = isVisible ? 'Ocultar' : 'Ver detalles';
+          legendToggleText.textContent = isVisible ? 'Ocultar' : 'Ver capas fondo';
         }
       });
     }
