@@ -12,10 +12,6 @@
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
     crossorigin=""
   />
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.3.0/dist/leaflet-rotate.css"
-  />
 
   <style>
     :root {
@@ -90,65 +86,71 @@
       transform: scale(0.92);
     }
 
-    /* Botón flotante Brújula / Giroscopio */
-    .compass-btn {
-      position: fixed;
-      right: 12px;
-      bottom: 262px;
-      z-index: 1000;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: rgba(15, 23, 42, 0.94);
-      border: 1px solid var(--border-color);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: transform 0.15s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
-      user-select: none;
-    }
-
-    .compass-btn:active {
-      transform: scale(0.92);
-    }
-
-    .compass-btn.active {
-      border-color: #38bdf8;
-      background: rgba(14, 165, 233, 0.22);
-      box-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
-    }
-
-    .compass-needle-icon {
-      width: 22px;
-      height: 22px;
+    /* Marcador GPS de usuario con flecha y haz de visión giroscópico (Estilo Google Maps) */
+    .user-location-container {
+      width: 64px;
+      height: 64px;
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.12s linear;
+      pointer-events: none;
+    }
+
+    .user-location-wrapper {
+      width: 64px;
+      height: 64px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       transform-origin: 50% 50%;
+      transition: transform 0.12s linear;
     }
 
-    .compass-needle-svg {
-      width: 100%;
-      height: 100%;
-      display: block;
+    /* Haz de visión hacia adelante estilo linterna de Google Maps */
+    .user-vision-cone {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: conic-gradient(
+        from -35deg at 50% 50%,
+        rgba(14, 165, 233, 0) 0deg,
+        rgba(14, 165, 233, 0.42) 20deg,
+        rgba(56, 189, 248, 0.65) 35deg,
+        rgba(14, 165, 233, 0.42) 50deg,
+        rgba(14, 165, 233, 0) 70deg,
+        rgba(14, 165, 233, 0) 360deg
+      );
+      filter: drop-shadow(0 0 6px rgba(14, 165, 233, 0.55));
+      pointer-events: none;
     }
 
-    .compass-badge-text {
-      font-size: 0.58rem;
-      font-weight: 800;
+    /* Punto central azul de ubicación con halo blanco y flecha de rumbo */
+    .user-puck-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #38bdf8 0%, #0284c7 100%);
+      border: 2.5px solid #ffffff;
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.35), 0 3px 8px rgba(0, 0, 0, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      position: relative;
+    }
+
+    .user-puck-arrow {
+      color: #ffffff;
+      font-size: 0.72rem;
       line-height: 1;
-      margin-top: 1px;
-      letter-spacing: -0.2px;
-      color: #94a3b8;
-    }
-
-    .compass-btn.active .compass-badge-text {
-      color: #38bdf8;
+      font-weight: 900;
+      transform: translateY(-0.5px);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
     }
 
     /* Notificaciones / Alertas en pantalla */
@@ -2003,14 +2005,9 @@
         <div class="nav-instruction-text" id="navInstructionText">Iniciando navegación GPS...</div>
         <div class="nav-surface-pill" id="navSurfacePill">🟢 1º Carril Bici</div>
       </div>
-      <div class="nav-hud-actions">
-        <button type="button" class="nav-voice-btn" id="navGyroHudBtn" title="Alternar orientación por Giroscopio / Norte arriba">
-          🧭
-        </button>
-        <button type="button" class="nav-voice-btn" id="navVoiceToggleBtn" title="Activar o silenciar indicaciones por voz">
-          🔊
-        </button>
-      </div>
+      <button type="button" class="nav-voice-btn" id="navVoiceToggleBtn" title="Activar o silenciar indicaciones por voz">
+        🔊
+      </button>
     </div>
     <div class="nav-hud-sub">
       <span id="navNextStepText">Siguiente: Continúa por la ruta marcada</span>
@@ -2021,18 +2018,6 @@
   <!-- Botón flotante para volver a centrar la cámara en el GPS durante la navegación -->
   <button type="button" id="recenterNavBtn" class="recenter-nav-btn">
     🎯 Recentrar en mí
-  </button>
-
-  <!-- Botón flotante Brújula / Giroscopio (Rotación de vista táctil y giroscopio) -->
-  <button type="button" id="compassBtn" class="compass-btn" title="Brújula: Toca para fijar Norte arriba o alternar modo Giroscopio">
-    <div class="compass-needle-icon" id="compassNeedle">
-      <svg class="compass-needle-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="16,3 21,16 16,13 11,16" fill="#ef4444" stroke="#b91c1c" stroke-width="0.8"/>
-        <polygon points="16,29 21,16 16,13 11,16" fill="#cbd5e1" stroke="#94a3b8" stroke-width="0.8"/>
-        <circle cx="16" cy="16" r="2.6" fill="#0f172a" stroke="#38bdf8" stroke-width="1.2"/>
-      </svg>
-    </div>
-    <span class="compass-badge-text" id="compassLabel">N</span>
   </button>
 
   <!-- Botón flotante de alternancia rápida de mapa base -->
@@ -2150,8 +2135,6 @@
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""
   ></script>
-  <!-- Plugin de rotación de mapa y brújula para Leaflet -->
-  <script src="https://unpkg.com/@tomickigrzegorz/leaflet-rotate@0.3.0/dist/leaflet-rotate.umd.min.js"></script>
 
   <script>
     /*************************************************************************
@@ -2431,11 +2414,7 @@
      * 1. INICIALIZACIÓN DEL MAPA BASE (Leaflet.js) Y SELECTOR CARTOGRÁFICO
      *************************************************************************/
     const map = L.map('map', {
-      zoomControl: false,
-      rotate: true,
-      touchRotate: true,
-      rotateControl: false,
-      bearing: 0
+      zoomControl: false
     }).setView(VALLADOLID_CENTER, VALLADOLID_ZOOM);
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -5102,11 +5081,16 @@
 
     function updateNavUserPuck(lat, lon, accuracyMeters = 15, headingDeg = null) {
       const latLng = [lat, lon];
-      const currentBearing = (map && typeof map.getBearing === 'function') ? map.getBearing() : 0;
-      const rot = (Number.isFinite(headingDeg) ? headingDeg : 0) - currentBearing;
+      const rot = Number.isFinite(headingDeg) ? headingDeg : (state.currentRiderHeading || 0);
+
       const puckHtml = `
-        <div class="nav-rider-puck" style="transform: rotate(${rot}deg);">
-          <div class="nav-rider-arrow">▲</div>
+        <div class="user-location-container">
+          <div class="user-location-wrapper" id="navRiderPuck" style="transform: rotate(${rot}deg);">
+            <div class="user-vision-cone"></div>
+            <div class="user-puck-dot">
+              <div class="user-puck-arrow">▲</div>
+            </div>
+          </div>
         </div>
       `;
 
@@ -5114,19 +5098,24 @@
         const icon = L.divIcon({
           className: '',
           html: puckHtml,
-          iconSize: [34, 34],
-          iconAnchor: [17, 17]
+          iconSize: [64, 64],
+          iconAnchor: [32, 32]
         });
         state.navUserMarker = L.marker(latLng, { icon, zIndexOffset: 1500 }).addTo(map);
       } else {
         state.navUserMarker.setLatLng(latLng);
-        const icon = L.divIcon({
-          className: '',
-          html: puckHtml,
-          iconSize: [34, 34],
-          iconAnchor: [17, 17]
-        });
-        state.navUserMarker.setIcon(icon);
+        const puckEl = document.getElementById('navRiderPuck');
+        if (puckEl) {
+          puckEl.style.transform = `rotate(${rot}deg)`;
+        } else {
+          const icon = L.divIcon({
+            className: '',
+            html: puckHtml,
+            iconSize: [64, 64],
+            iconAnchor: [32, 32]
+          });
+          state.navUserMarker.setIcon(icon);
+        }
       }
 
       if (!state.navAccuracyCircle) {
@@ -5144,83 +5133,55 @@
     }
 
     /*************************************************************************
-     * 7.1 GIROSCOPIO, BRÚJULA Y ROTACIÓN DE VISTA (HEADING-UP / NORTE ARRIBA)
+     * 7.1 GIROSCOPIO: ROTACIÓN DE LA FLECHA DEL USUARIO (ESTILO GOOGLE MAPS)
+     * Rota la flecha y el haz de visión del usuario según el giroscopio/brújula
+     * y el rumbo de avance, manteniendo el mapa estático con el Norte arriba.
      *************************************************************************/
+    state.currentRiderHeading = 0;
     let orientationListenerActive = false;
-    let lastBearingApplied = 0;
+    let lastHeadingApplied = 0;
 
-    function updateCompassUI(bearing = 0) {
-      const needle = document.getElementById('compassNeedle');
-      const label = document.getElementById('compassLabel');
-      const btn = document.getElementById('compassBtn');
-      const hudBtn = document.getElementById('navGyroHudBtn');
-
-      if (needle) {
-        needle.style.transform = `rotate(${-bearing}deg)`;
-      }
-      if (btn) {
-        btn.classList.toggle('active', state.gyroActive);
-      }
-      if (hudBtn) {
-        hudBtn.classList.toggle('active', state.gyroActive);
-        hudBtn.textContent = state.gyroActive ? '🧭' : '⬆️';
-        hudBtn.title = state.gyroActive
-          ? 'Giroscopio activado (Orientado según la marcha). Toca para fijar Norte arriba.'
-          : 'Norte arriba fijo. Toca para activar Giroscopio / Orientación de marcha.';
-      }
-      if (label) {
-        if (state.gyroActive) {
-          label.textContent = 'GYRO';
-          label.style.color = '#38bdf8';
-        } else if (Math.round(bearing) === 0 || Math.round(bearing) === 360) {
-          label.textContent = 'N';
-          label.style.color = '#94a3b8';
-        } else {
-          label.textContent = `${Math.round(bearing)}°`;
-          label.style.color = '#cbd5e1';
-        }
+    function updateRiderPuckRotation(targetHeading) {
+      if (!Number.isFinite(targetHeading)) return;
+      state.currentRiderHeading = targetHeading;
+      const puckEl = document.getElementById('navRiderPuck');
+      if (puckEl) {
+        puckEl.style.transform = `rotate(${Math.round(targetHeading * 10) / 10}deg)`;
       }
     }
 
     function onDeviceOrientationEvent(e) {
       let heading = null;
       if (typeof e.webkitCompassHeading === 'number') {
-        heading = e.webkitCompassHeading;
+        heading = e.webkitCompassHeading; // iOS Safari
       } else if (typeof e.alpha === 'number') {
-        heading = (360 - e.alpha) % 360;
+        heading = (360 - e.alpha) % 360; // Android Chrome brújula absoluta
       }
 
       if (heading === null || isNaN(heading)) return;
       state.gyroAvailable = true;
 
-      // Si el giroscopio está activado y el mapa sigue la posición del usuario
-      if (state.gyroActive && state.navFollowUser) {
-        // En movimiento a buena velocidad (> 3.5 km/h), preferir el rumbo GPS
-        let target = heading;
-        if (state.navLastSpeedKmh > 3.5 && typeof state.navLastGpsHeading === 'number' && !isNaN(state.navLastGpsHeading)) {
-          target = state.navLastGpsHeading;
-        }
+      // Si nos movemos a velocidad ciclista (> 3.8 km/h), el rumbo GPS de la marcha tiene preferencia
+      let target = heading;
+      if (state.navLastSpeedKmh > 3.8 && typeof state.navLastGpsHeading === 'number' && !isNaN(state.navLastGpsHeading)) {
+        target = state.navLastGpsHeading;
+      }
 
-        const diff = ((target - lastBearingApplied + 540) % 360) - 180;
-        if (Math.abs(diff) >= 2.0) {
-          lastBearingApplied = (lastBearingApplied + diff * 0.35 + 360) % 360;
-          if (typeof map.setBearing === 'function') {
-            map.setBearing(lastBearingApplied);
-          }
-          updateCompassUI(lastBearingApplied);
-        }
+      const diff = ((target - lastHeadingApplied + 540) % 360) - 180;
+      if (Math.abs(diff) >= 1.2) {
+        lastHeadingApplied = (lastHeadingApplied + diff * 0.38 + 360) % 360;
+        updateRiderPuckRotation(lastHeadingApplied);
       }
     }
 
     async function startGyroscopeListener() {
       if (orientationListenerActive) return;
 
-      // Permisos específicos para Safari en iOS 13+
       if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
         try {
           const res = await DeviceOrientationEvent.requestPermission();
           if (res !== 'granted') {
-            showToast('Permiso de orientación denegado en tu navegador.', 'warning', 2500);
+            console.warn('Permiso de orientación denegado en el navegador');
             return;
           }
         } catch (err) {
@@ -5249,23 +5210,6 @@
       orientationListenerActive = false;
     }
 
-    async function toggleGyroMode() {
-      state.gyroActive = !state.gyroActive;
-      if (state.gyroActive) {
-        await startGyroscopeListener();
-        state.navFollowUser = true;
-        document.getElementById('recenterNavBtn')?.classList.remove('visible');
-        showToast('🧭 Giroscopio activado: la vista rota con tu orientación y marcha.', 'info', 2800);
-      } else {
-        if (typeof map.setBearing === 'function') {
-          map.setBearing(0);
-        }
-        lastBearingApplied = 0;
-        showToast('⬆️ Vista fijada con el Norte arriba.', 'info', 2000);
-      }
-      updateCompassUI(typeof map.getBearing === 'function' ? map.getBearing() : 0);
-    }
-
     function onLiveGpsPosition(pos) {
       if (!state.navActive) return;
       const { latitude, longitude, accuracy, speed, heading } = pos.coords;
@@ -5288,8 +5232,8 @@
       state.navLastSpeedKmh = speedKmh;
 
       // Calcular rumbo (heading) si el móvil no lo entrega directamente
-      let riderHeading = (typeof heading === 'number' && !Number.isNaN(heading)) ? heading : 0;
-      if (!riderHeading && state.navLastLatLng) {
+      let riderHeading = (typeof heading === 'number' && !Number.isNaN(heading)) ? heading : null;
+      if (riderHeading === null && state.navLastLatLng) {
         const movedDist = L.latLng(state.navLastLatLng.lat, state.navLastLatLng.lon)
           .distanceTo(L.latLng(latitude, longitude));
         if (movedDist > 2.5) {
@@ -5298,22 +5242,14 @@
       }
       if (typeof riderHeading === 'number' && !isNaN(riderHeading)) {
         state.navLastGpsHeading = riderHeading;
+        if (speedKmh > 3.0) {
+          lastHeadingApplied = riderHeading;
+          updateRiderPuckRotation(riderHeading);
+        }
       }
 
       state.navLastLatLng = { lat: latitude, lon: longitude };
       state.navLastTimestamp = now;
-
-      // Rotación con rumbo GPS en tiempo real durante la marcha
-      if (state.gyroActive && state.navFollowUser && speedKmh > 3.0 && typeof riderHeading === 'number' && !isNaN(riderHeading)) {
-        const diff = ((riderHeading - lastBearingApplied + 540) % 360) - 180;
-        if (Math.abs(diff) >= 2.0) {
-          lastBearingApplied = (lastBearingApplied + diff * 0.45 + 360) % 360;
-          if (typeof map.setBearing === 'function') {
-            map.setBearing(lastBearingApplied);
-          }
-          updateCompassUI(lastBearingApplied);
-        }
-      }
 
       const accLabel = document.getElementById('navGpsAccuracyLabel');
       if (accLabel) {
@@ -5402,10 +5338,8 @@
 
       requestScreenWakeLock();
 
-      // Iniciar giroscopio / orientación automática de marcha
-      state.gyroActive = true;
+      // Activar giroscopio para la orientación de la flecha/cono del usuario
       startGyroscopeListener();
-      updateCompassUI(typeof map.getBearing === 'function' ? map.getBearing() : 0);
 
       // Posición inicial provisional en el punto de origen hasta que entre el primer fix de GPS en tiempo real
       const startCoord = state.origin
@@ -5436,20 +5370,14 @@
         showToast('Tu navegador no soporta geolocalización GPS en tiempo real.', 'error');
       }
 
-      showToast('🚀 Navegación GPS activada (Vista despejada + Giroscopio).', 'success', 2800);
+      showToast('🚀 Navegación GPS activada (Vista despejada con flecha giroscópica).', 'success', 2800);
     }
 
     function stopLiveNavigation(showMsg = true) {
       state.navActive = false;
       state.navFollowUser = false;
-      state.gyroActive = false;
 
       stopGyroscopeListener();
-      if (typeof map.setBearing === 'function') {
-        map.setBearing(0);
-      }
-      lastBearingApplied = 0;
-      updateCompassUI(0);
 
       if (state.navWatchId !== null && 'geolocation' in navigator) {
         navigator.geolocation.clearWatch(state.navWatchId);
@@ -5514,38 +5442,6 @@
         document.getElementById('recenterNavBtn')?.classList.add('visible');
       }
     });
-
-    map.on('rotatestart', () => {
-      if (state.navActive && state.navFollowUser) {
-        state.navFollowUser = false;
-        document.getElementById('recenterNavBtn')?.classList.add('visible');
-      }
-    });
-
-    map.on('rotate', () => {
-      const b = (typeof map.getBearing === 'function') ? map.getBearing() : 0;
-      updateCompassUI(b);
-      if (state.navLastLatLng && state.navUserMarker) {
-        updateNavUserPuck(state.navLastLatLng.lat, state.navLastLatLng.lon, 15, state.navLastGpsHeading);
-      }
-    });
-
-    document.getElementById('compassBtn')?.addEventListener('click', () => {
-      const b = (typeof map.getBearing === 'function') ? map.getBearing() : 0;
-      if (Math.round(b) !== 0 && Math.round(b) !== 360) {
-        if (typeof map.setBearing === 'function') {
-          map.setBearing(0);
-        }
-        lastBearingApplied = 0;
-        state.gyroActive = false;
-        updateCompassUI(0);
-        showToast('⬆️ Vista alineada al Norte', 'info', 1600);
-      } else {
-        toggleGyroMode();
-      }
-    });
-
-    document.getElementById('navGyroHudBtn')?.addEventListener('click', toggleGyroMode);
 
     document.getElementById('recenterNavBtn')?.addEventListener('click', () => {
       state.navFollowUser = true;
