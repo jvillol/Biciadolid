@@ -1357,12 +1357,12 @@
       top: 10px;
       left: 10px;
       right: 10px;
-      max-width: 480px;
+      max-width: 500px;
       margin: 0 auto;
-      background: linear-gradient(145deg, #065f46 0%, #064e3b 100%);
-      border: 2px solid rgba(52, 211, 153, 0.55);
+      background: linear-gradient(145deg, #064e3b 0%, #022c22 100%);
+      border: 2px solid rgba(52, 211, 153, 0.65);
       border-radius: 18px;
-      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.65);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75);
       z-index: 1500;
       color: #fff;
       overflow: hidden;
@@ -1375,11 +1375,29 @@
       display: flex;
     }
 
+    /* Barra de progreso de proximidad a la maniobra */
+    .nav-progress-track {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.15);
+      overflow: hidden;
+    }
+
+    .nav-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #34d399, #38bdf8);
+      transition: width 0.35s ease-out;
+      box-shadow: 0 0 8px #34d399;
+    }
+
     .nav-hud-main {
       display: flex;
       align-items: center;
       gap: 12px;
       padding: 12px 14px;
+      cursor: pointer;
+      user-select: none;
     }
 
     .nav-turn-box {
@@ -1387,40 +1405,55 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-width: 62px;
-      height: 62px;
-      background: rgba(255, 255, 255, 0.14);
-      border-radius: 14px;
+      min-width: 68px;
+      height: 68px;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 16px;
       padding: 4px;
       flex-shrink: 0;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.25);
     }
 
     .nav-turn-icon {
-      font-size: 1.85rem;
+      font-size: 2.1rem;
       line-height: 1.05;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
     }
 
     .nav-turn-dist {
-      font-size: 0.78rem;
-      font-weight: 800;
-      color: #a7f3d0;
-      margin-top: 2px;
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: #6ee7b7;
+      margin-top: 1px;
+      letter-spacing: -0.2px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
     }
 
     .nav-instruction-col {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 3px;
       flex: 1;
       min-width: 0;
     }
 
-    .nav-instruction-text {
-      font-size: 1.02rem;
-      font-weight: 800;
-      line-height: 1.22;
+    .nav-instruction-action {
+      font-size: 1.12rem;
+      font-weight: 900;
+      line-height: 1.2;
       color: #ffffff;
-      word-wrap: break-word;
+      letter-spacing: -0.2px;
+    }
+
+    .nav-instruction-street {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #a7f3d0;
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .nav-surface-pill {
@@ -1432,19 +1465,20 @@
       font-weight: 700;
       padding: 3px 9px;
       border-radius: 999px;
-      background: rgba(15, 23, 42, 0.65);
+      background: rgba(15, 23, 42, 0.7);
       border: 1px solid rgba(255, 255, 255, 0.25);
+      margin-top: 2px;
     }
 
     .nav-hud-actions {
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 6px;
       flex-shrink: 0;
     }
 
-    .nav-voice-btn {
-      background: rgba(15, 23, 42, 0.45);
+    .nav-hud-btn {
+      background: rgba(15, 23, 42, 0.5);
       border: 1px solid rgba(255, 255, 255, 0.25);
       color: #fff;
       width: 38px;
@@ -1455,20 +1489,28 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
-      transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+      transition: background 0.2s, transform 0.12s, border-color 0.2s;
     }
 
-    .nav-voice-btn.active {
+    .nav-hud-btn:hover {
+      background: rgba(56, 189, 248, 0.35);
+      border-color: #38bdf8;
+    }
+
+    .nav-hud-btn:active {
+      transform: scale(0.92);
+    }
+
+    .nav-hud-btn.active {
       background: rgba(14, 165, 233, 0.45);
       border-color: #38bdf8;
       box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
     }
 
     .nav-hud-sub {
-      background: rgba(6, 36, 28, 0.85);
-      padding: 6px 14px;
-      font-size: 0.74rem;
+      background: rgba(2, 44, 34, 0.92);
+      padding: 7px 14px;
+      font-size: 0.75rem;
       color: #d1fae5;
       display: flex;
       align-items: center;
@@ -1476,27 +1518,77 @@
       border-top: 1px solid rgba(255, 255, 255, 0.12);
     }
 
+    .nav-next-step-wrap {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      padding-right: 8px;
+    }
+
     /* Botón de Iniciar Navegación en la tarjeta resumen */
     .btn-start-nav {
       width: 100%;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      position: relative;
+      background: linear-gradient(135deg, #059669 0%, #10b981 50%, #06b6d4 100%);
       color: #fff;
       border: none;
-      border-radius: 12px;
-      padding: 11px 14px;
-      font-size: 0.9rem;
-      font-weight: 800;
+      border-radius: 14px;
+      padding: 13px 18px;
+      font-size: 0.98rem;
+      font-weight: 900;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
-      transition: transform 0.12s, box-shadow 0.2s;
+      gap: 12px;
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+      letter-spacing: 0.2px;
+      transition: transform 0.15s, box-shadow 0.2s, filter 0.2s;
+      overflow: hidden;
+    }
+
+    .btn-start-nav:hover {
+      box-shadow: 0 8px 26px rgba(16, 185, 129, 0.65);
+      filter: brightness(1.05);
     }
 
     .btn-start-nav:active {
       transform: scale(0.98);
+    }
+
+    .btn-start-nav-icon {
+      font-size: 1.45rem;
+      animation: pulseNavIcon 2.2s infinite ease-in-out;
+      flex-shrink: 0;
+    }
+
+    .btn-start-nav-text {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      line-height: 1.2;
+    }
+
+    .btn-start-nav-main {
+      font-size: 1.02rem;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-start-nav-sub {
+      font-size: 0.72rem;
+      font-weight: 600;
+      opacity: 0.9;
+      color: #ecfdf5;
+    }
+
+    @keyframes pulseNavIcon {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.18); }
     }
 
     /* Barra inferior durante la navegación activa */
@@ -1566,6 +1658,31 @@
       text-transform: uppercase;
     }
 
+    .btn-nav-steps {
+      background: rgba(30, 41, 59, 0.9);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      border-radius: 12px;
+      padding: 9px 12px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.15s, border-color 0.15s, transform 0.12s;
+      flex-shrink: 0;
+    }
+
+    .btn-nav-steps:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: #38bdf8;
+    }
+
+    .btn-nav-steps:active {
+      transform: scale(0.95);
+    }
+
     .btn-stop-nav {
       background: #ef4444;
       color: #fff;
@@ -1580,6 +1697,204 @@
       gap: 5px;
       box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
       flex-shrink: 0;
+      transition: transform 0.12s, filter 0.15s;
+    }
+
+    .btn-stop-nav:active {
+      transform: scale(0.95);
+    }
+
+    /* Drawer de lista de pasos / itinerario completo */
+    .maneuvers-drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0.25s, opacity 0.25s ease;
+    }
+
+    .maneuvers-drawer.open {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .maneuvers-drawer-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+    }
+
+    .maneuvers-drawer-sheet {
+      position: relative;
+      background: var(--bg-card);
+      border-top-left-radius: 22px;
+      border-top-right-radius: 22px;
+      border-top: 2px solid rgba(56, 189, 248, 0.45);
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.65);
+      max-height: 72vh;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1;
+    }
+
+    .maneuvers-drawer.open .maneuvers-drawer-sheet {
+      transform: translateY(0);
+    }
+
+    .maneuvers-drawer-handle {
+      width: 44px;
+      height: 5px;
+      background: var(--text-muted);
+      opacity: 0.4;
+      border-radius: 3px;
+      margin: 10px auto 4px auto;
+    }
+
+    .maneuvers-drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 18px 12px 18px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .maneuvers-drawer-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .maneuvers-count-pill {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .btn-close-drawer {
+      background: var(--bg-input);
+      color: var(--text-muted);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 1.05rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .btn-close-drawer:hover {
+      color: var(--text-primary);
+    }
+
+    .maneuvers-list {
+      overflow-y: auto;
+      padding: 10px 14px 24px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .maneuver-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 11px 12px;
+      border-radius: 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+
+    .maneuver-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    .maneuver-item:active {
+      transform: scale(0.99);
+    }
+
+    .maneuver-item.current {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: #10b981;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .maneuver-item-icon-box {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .maneuver-item.current .maneuver-item-icon-box {
+      background: #10b981;
+      color: #fff;
+    }
+
+    .maneuver-item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .maneuver-item-action {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .maneuver-item-street {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #38bdf8;
+    }
+
+    .maneuver-item-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .maneuver-item-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 6px;
     }
 
     /* Botón flotante "Recentrar" cuando el usuario mueve el mapa en navegación */
@@ -1996,22 +2311,35 @@
 
   <!-- Banner Superior de Navegación en Vivo (Estilo Google Maps / Waze) -->
   <section class="nav-hud-banner" id="navHudBanner" aria-live="polite">
-    <div class="nav-hud-main">
+    <!-- Barra de progreso visual hacia la siguiente maniobra -->
+    <div class="nav-progress-track">
+      <div class="nav-progress-fill" id="navTurnProgressFill"></div>
+    </div>
+    <div class="nav-hud-main" id="navHudMainClickable" title="Toca para ver el itinerario completo con todos los giros">
       <div class="nav-turn-box">
         <span class="nav-turn-icon" id="navTurnIcon">⬆️</span>
         <span class="nav-turn-dist" id="navTurnDist">0 m</span>
       </div>
       <div class="nav-instruction-col">
-        <div class="nav-instruction-text" id="navInstructionText">Iniciando navegación GPS...</div>
+        <div class="nav-instruction-action" id="navInstructionAction">Iniciando navegación GPS...</div>
+        <div class="nav-instruction-street" id="navInstructionStreet">Sigue el trazado marcado</div>
         <div class="nav-surface-pill" id="navSurfacePill">🟢 1º Carril Bici</div>
       </div>
-      <button type="button" class="nav-voice-btn" id="navVoiceToggleBtn" title="Activar o silenciar indicaciones por voz">
-        🔊
-      </button>
+      <div class="nav-hud-actions">
+        <button type="button" class="nav-hud-btn" id="navVoiceToggleBtn" title="Activar o silenciar indicaciones por voz">
+          🔊
+        </button>
+        <button type="button" class="nav-hud-btn" id="navHudStepsBtn" title="Ver itinerario de giros">
+          📋
+        </button>
+      </div>
     </div>
     <div class="nav-hud-sub">
-      <span id="navNextStepText">Siguiente: Continúa por la ruta marcada</span>
-      <span id="navGpsAccuracyLabel" style="opacity:0.85;">GPS activo</span>
+      <div class="nav-next-step-wrap">
+        <span style="opacity:0.75; font-size:0.7rem;">Luego:</span>
+        <span id="navNextStepText">Continúa por la ruta marcada</span>
+      </div>
+      <span id="navGpsAccuracyLabel" style="opacity:0.85; font-size:0.7rem; flex-shrink:0;">GPS activo</span>
     </div>
   </section>
 
@@ -2046,7 +2374,10 @@
           <span class="nav-live-lbl" id="navEtaClock">Llegada</span>
         </div>
       </div>
-      <button type="button" class="btn-stop-nav" id="stopLiveNavBtn">
+      <button type="button" class="btn-nav-steps" id="openManeuversDrawerBtn" title="Ver lista de indicaciones">
+        📋 Pasos
+      </button>
+      <button type="button" class="btn-stop-nav" id="stopLiveNavBtn" title="Salir de la navegación">
         ⏹️ Salir
       </button>
     </div>
@@ -2080,8 +2411,12 @@
       </div>
 
       <!-- Botón principal para iniciar la navegación paso a paso con GPS en tiempo real -->
-      <button type="button" class="btn-start-nav" id="startLiveNavBtn">
-        🚀 Iniciar ruta en vivo (GPS paso a paso)
+      <button type="button" class="btn-start-nav" id="startLiveNavBtn" aria-label="Iniciar navegación GPS en vivo">
+        <span class="btn-start-nav-icon">🧭</span>
+        <div class="btn-start-nav-text">
+          <span class="btn-start-nav-main">INICIAR RUTA EN VIVO</span>
+          <span class="btn-start-nav-sub">GPS paso a paso • Guía por voz • Giroscopio</span>
+        </div>
       </button>
     </div>
 
@@ -2128,6 +2463,24 @@
       </div>
     </div>
   </aside>
+
+  <!-- Drawer Deslizable de Itinerario / Lista de Pasos -->
+  <div class="maneuvers-drawer" id="maneuversDrawer" aria-hidden="true">
+    <div class="maneuvers-drawer-backdrop" id="maneuversBackdrop"></div>
+    <div class="maneuvers-drawer-sheet">
+      <div class="maneuvers-drawer-handle"></div>
+      <div class="maneuvers-drawer-header">
+        <div class="maneuvers-drawer-title">
+          <span>📋 Itinerario de la ruta</span>
+          <span class="maneuvers-count-pill" id="maneuversCountPill">0 indicaciones</span>
+        </div>
+        <button type="button" class="btn-close-drawer" id="closeManeuversDrawerBtn" aria-label="Cerrar itinerario">✕</button>
+      </div>
+      <div class="maneuvers-list" id="maneuversList">
+        <!-- Generado dinámicamente -->
+      </div>
+    </div>
+  </div>
 
   <!-- Leaflet JS desde CDN -->
   <script
@@ -4904,10 +5257,79 @@
       return `${(meters / 1000).toFixed(1)} km`;
     }
 
-    function speakNavInstruction(text, key = '') {
+    // Separa una indicación en Acción ("Gira a la derecha") y Calle ("hacia Paseo de Zorrilla")
+    function splitInstruction(raw) {
+      if (!raw) return { action: 'Continúa por la ruta', street: '' };
+      const cleaned = raw.trim();
+      const prepMatch = cleaned.match(/^(.*?)(?:\s+(hacia|en|por)\s+)(.+)$/i);
+      if (prepMatch) {
+        return {
+          action: prepMatch[1].trim(),
+          street: `${prepMatch[2]} ${prepMatch[3]}`.trim()
+        };
+      }
+      return {
+        action: cleaned,
+        street: ''
+      };
+    }
+
+    // Sintetizador Web Audio API para alertas sonoras nítidas (chime de giro y fanfarria de llegada)
+    function playNavChime(type = 'turn') {
+      if (!state.navVoiceEnabled) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        if (!state.audioCtx) {
+          state.audioCtx = new AudioCtx();
+        }
+        if (state.audioCtx.state === 'suspended') {
+          state.audioCtx.resume();
+        }
+        const ctx = state.audioCtx;
+        const now = ctx.currentTime;
+
+        if (type === 'turn') {
+          // Doble tono nítido y claro estilo Google Maps / Waze (D5 587Hz -> A5 880Hz)
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(587.33, now);
+          osc.frequency.setValueAtTime(880.0, now + 0.11);
+          gain.gain.setValueAtTime(0, now);
+          gain.gain.linearRampToValueAtTime(0.25, now + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.30);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.31);
+        } else if (type === 'arrival') {
+          // Secuencia alegre de llegada: C5 -> E5 -> G5 -> C6
+          const tones = [523.25, 659.25, 783.99, 1046.50];
+          tones.forEach((freq, idx) => {
+            const t = now + idx * 0.10;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, t);
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.linearRampToValueAtTime(0.24, t + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.24);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.25);
+          });
+        }
+      } catch (_) {}
+    }
+
+    function speakNavInstruction(text, key = '', chimeType = 'turn') {
       if (!state.navVoiceEnabled || !('speechSynthesis' in window) || !text) return;
       if (key && state.navLastSpokenKey === key) return;
       if (key) state.navLastSpokenKey = key;
+
+      playNavChime(chimeType);
 
       try {
         window.speechSynthesis.cancel();
@@ -4915,8 +5337,123 @@
         utter.lang = 'es-ES';
         utter.rate = 1.04;
         utter.pitch = 1.0;
-        window.speechSynthesis.speak(utter);
+        setTimeout(() => {
+          if (state.navVoiceEnabled && state.navActive) {
+            window.speechSynthesis.speak(utter);
+          }
+        }, 220);
       } catch (_) {}
+    }
+
+    let maneuverHighlightMarker = null;
+
+    function renderManeuversDrawer() {
+      const listEl = document.getElementById('maneuversList');
+      const countEl = document.getElementById('maneuversCountPill');
+      if (!listEl || !state.activeRoute) return;
+
+      const coords = state.activeRoute.coords || [];
+      const maneuvers = (Array.isArray(state.activeRoute.maneuvers) && state.activeRoute.maneuvers.length > 0)
+        ? state.activeRoute.maneuvers
+        : buildFallbackManeuvers(coords);
+
+      if (countEl) countEl.textContent = `${maneuvers.length} indicaciones`;
+      listEl.innerHTML = '';
+
+      maneuvers.forEach((m, idx) => {
+        const parts = splitInstruction(m.instruction);
+        const icon = getManeuverIcon(m.type, m.instruction);
+        const distText = (m.lengthMeters && m.lengthMeters > 0) ? formatMetersText(m.lengthMeters) : '';
+
+        const wayVal = getCurrentWaytypeAtIndex(state.activeRoute.waytypeValues, m.beginShapeIndex || 0);
+        const styleInfo = getWaytypeStyle(wayVal);
+        let surfaceLabel = '🟢 Carril Bici';
+        let surfaceBg = 'rgba(46, 204, 113, 0.2)';
+        let surfaceColor = '#86efac';
+        if (styleInfo.category === 'ciclo30') {
+          surfaceLabel = '🟣 Ciclocarril 30';
+          surfaceBg = 'rgba(197, 0, 255, 0.2)';
+          surfaceColor = '#f0abfc';
+        } else if (styleInfo.category === 'danger') {
+          surfaceLabel = '🔴 Calzada ≤50';
+          surfaceBg = 'rgba(231, 76, 60, 0.2)';
+          surfaceColor = '#fca5a5';
+        } else if (styleInfo.category === 'other') {
+          surfaceLabel = '🚶 A pie';
+          surfaceBg = 'rgba(243, 156, 18, 0.2)';
+          surfaceColor = '#fdba74';
+        }
+
+        const item = document.createElement('div');
+        item.className = 'maneuver-item';
+        item.id = `maneuverItem_${idx}`;
+        item.innerHTML = `
+          <div class="maneuver-item-icon-box">${icon}</div>
+          <div class="maneuver-item-info">
+            <div class="maneuver-item-action">${parts.action}</div>
+            ${parts.street ? `<div class="maneuver-item-street">${parts.street}</div>` : ''}
+            <div class="maneuver-item-meta">
+              ${distText ? `<span>📏 ${distText}</span>` : ''}
+              <span class="maneuver-item-badge" style="background:${surfaceBg}; color:${surfaceColor};">${surfaceLabel}</span>
+            </div>
+          </div>
+        `;
+
+        item.addEventListener('click', () => {
+          if (Array.isArray(coords) && m.beginShapeIndex < coords.length) {
+            const pt = coords[m.beginShapeIndex];
+            const latLng = [pt[1], pt[0]];
+            map.setView(latLng, 18, { animate: true });
+
+            if (maneuverHighlightMarker) {
+              map.removeLayer(maneuverHighlightMarker);
+            }
+            maneuverHighlightMarker = L.circleMarker(latLng, {
+              radius: 14,
+              color: '#38bdf8',
+              weight: 3,
+              fillColor: '#0ea5e9',
+              fillOpacity: 0.5
+            }).addTo(map);
+
+            setTimeout(() => {
+              if (maneuverHighlightMarker) {
+                map.removeLayer(maneuverHighlightMarker);
+                maneuverHighlightMarker = null;
+              }
+            }, 3500);
+
+            closeManeuversDrawer();
+            showToast(`📍 Vista previa: ${parts.action} ${parts.street}`, 'info', 2200);
+          }
+        });
+
+        listEl.appendChild(item);
+      });
+    }
+
+    function highlightActiveDrawerManeuver(activeIdx) {
+      const items = document.querySelectorAll('.maneuver-item');
+      items.forEach((item, idx) => {
+        item.classList.toggle('current', idx === activeIdx);
+      });
+    }
+
+    function openManeuversDrawer() {
+      renderManeuversDrawer();
+      const drawer = document.getElementById('maneuversDrawer');
+      if (drawer) {
+        drawer.classList.add('open');
+        drawer.setAttribute('aria-hidden', 'false');
+      }
+    }
+
+    function closeManeuversDrawer() {
+      const drawer = document.getElementById('maneuversDrawer');
+      if (drawer) {
+        drawer.classList.remove('open');
+        drawer.setAttribute('aria-hidden', 'true');
+      }
     }
 
     function getCurrentWaytypeAtIndex(waytypeValues, idx) {
@@ -5031,9 +5568,12 @@
       if (distToDest <= 22) {
         document.getElementById('navTurnIcon').textContent = '🏁';
         document.getElementById('navTurnDist').textContent = '0 m';
-        document.getElementById('navInstructionText').textContent = '¡Has llegado a tu destino!';
+        document.getElementById('navInstructionAction').textContent = '¡Has llegado!';
+        document.getElementById('navInstructionStreet').textContent = 'Destino alcanzado con éxito';
         document.getElementById('navNextStepText').textContent = 'Ruta completada con éxito';
-        speakNavInstruction('Has llegado a tu destino.', 'arrived_dest');
+        const progFill = document.getElementById('navTurnProgressFill');
+        if (progFill) progFill.style.width = '100%';
+        speakNavInstruction('Has llegado a tu destino.', 'arrived_dest', 'arrival');
         showToast('🏁 ¡Has llegado a tu destino!', 'success', 5000);
         return;
       }
@@ -5063,19 +5603,32 @@
       const icon = getManeuverIcon(nextManeuver.type, nextManeuver.instruction);
       document.getElementById('navTurnIcon').textContent = icon;
       document.getElementById('navTurnDist').textContent = formatMetersText(distToTurn);
-      document.getElementById('navInstructionText').textContent = nextManeuver.instruction;
+
+      const parts = splitInstruction(nextManeuver.instruction);
+      document.getElementById('navInstructionAction').textContent = parts.action;
+      document.getElementById('navInstructionStreet').textContent = parts.street || 'Sigue el trazado marcado';
+
+      // Barra de progreso visual hacia el siguiente giro
+      const totalManeuverDist = Math.max(70, nextManeuver.lengthMeters || 150);
+      const progressPct = Math.max(0, Math.min(100, Math.round((1 - (distToTurn / totalManeuverDist)) * 100)));
+      const progFill = document.getElementById('navTurnProgressFill');
+      if (progFill) progFill.style.width = `${progressPct}%`;
 
       if (followingManeuver) {
-        document.getElementById('navNextStepText').textContent = `Después: ${followingManeuver.instruction}`;
+        const nextParts = splitInstruction(followingManeuver.instruction);
+        const nextIcon = getManeuverIcon(followingManeuver.type, followingManeuver.instruction);
+        document.getElementById('navNextStepText').textContent = `${nextIcon} ${nextParts.action} ${nextParts.street}`.trim();
       } else {
-        document.getElementById('navNextStepText').textContent = `Continúa hacia el destino (${formatMetersText(remMeters)})`;
+        document.getElementById('navNextStepText').textContent = `🏁 Continúa hacia el destino (${formatMetersText(remMeters)})`;
       }
 
-      // 8. Avisos por voz en español al aproximarse al giro (a 120m y a 25m)
+      highlightActiveDrawerManeuver(nextManeuverIdx);
+
+      // 8. Avisos por voz en español con chime previo al aproximarse al giro (a 120m y a 25m)
       if (distToTurn <= 28) {
-        speakNavInstruction(`Ahora, ${nextManeuver.instruction}`, `turn_now_${nextManeuverIdx}`);
+        speakNavInstruction(`Ahora, ${nextManeuver.instruction}`, `turn_now_${nextManeuverIdx}`, 'turn');
       } else if (distToTurn <= 125) {
-        speakNavInstruction(`En ${Math.round(distToTurn / 10) * 10} metros, ${nextManeuver.instruction}`, `turn_soon_${nextManeuverIdx}`);
+        speakNavInstruction(`En ${Math.round(distToTurn / 10) * 10} metros, ${nextManeuver.instruction}`, `turn_soon_${nextManeuverIdx}`, 'turn');
       }
     }
 
@@ -5341,6 +5894,15 @@
       // Activar giroscopio para la orientación de la flecha/cono del usuario
       startGyroscopeListener();
 
+      // Asegurar maniobras y renderizar el itinerario
+      if (!Array.isArray(state.activeRoute.maneuvers) || state.activeRoute.maneuvers.length === 0) {
+        state.activeRoute.maneuvers = buildFallbackManeuvers(state.activeRoute.coords);
+      }
+      renderManeuversDrawer();
+
+      const progFill = document.getElementById('navTurnProgressFill');
+      if (progFill) progFill.style.width = '0%';
+
       // Posición inicial provisional en el punto de origen hasta que entre el primer fix de GPS en tiempo real
       const startCoord = state.origin
         ? [state.origin.lat, state.origin.lon]
@@ -5351,6 +5913,9 @@
       updateNavigationProgressAtPoint(startCoord[0], startCoord[1]);
 
       const firstManeuver = state.activeRoute.maneuvers?.[0]?.instruction || 'Inicia la ruta y sigue el camino indicado';
+      const firstParts = splitInstruction(firstManeuver);
+      document.getElementById('navInstructionAction').textContent = firstParts.action;
+      document.getElementById('navInstructionStreet').textContent = firstParts.street || 'Sigue el trazado marcado';
       speakNavInstruction(`Iniciando navegación en Biciadolid. ${firstManeuver}`, 'start_nav');
 
       if ('geolocation' in navigator) {
@@ -5417,6 +5982,12 @@
         state.navSavedLayers = null;
       }
 
+      closeManeuversDrawer();
+      if (maneuverHighlightMarker) {
+        map.removeLayer(maneuverHighlightMarker);
+        maneuverHighlightMarker = null;
+      }
+
       document.getElementById('navHudBanner').classList.remove('visible');
       document.getElementById('navActiveBar').classList.remove('visible');
       document.getElementById('recenterNavBtn').classList.remove('visible');
@@ -5453,7 +6024,19 @@
       }
     });
 
-    document.getElementById('navVoiceToggleBtn')?.addEventListener('click', () => {
+    // Control de apertura y cierre del Drawer de Itinerario
+    document.getElementById('navHudMainClickable')?.addEventListener('click', openManeuversDrawer);
+    document.getElementById('navHudStepsBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openManeuversDrawer();
+    });
+    document.getElementById('openManeuversDrawerBtn')?.addEventListener('click', openManeuversDrawer);
+    document.getElementById('closeManeuversDrawerBtn')?.addEventListener('click', closeManeuversDrawer);
+    document.getElementById('maneuversBackdrop')?.addEventListener('click', closeManeuversDrawer);
+
+    // Activar o silenciar síntesis y alertas por voz
+    document.getElementById('navVoiceToggleBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
       state.navVoiceEnabled = !state.navVoiceEnabled;
       const btn = document.getElementById('navVoiceToggleBtn');
       if (btn) {
