@@ -1,0 +1,658 @@
+/* ==========================================================================
+   Biciadolid - Módulo de Navegación GPS en Vivo, HUD y Giroscopio
+   ========================================================================== */
+
+/* Marcador GPS de usuario con flecha y haz de visión giroscópico (Estilo Google Maps) */
+    .user-location-container {
+      width: 64px;
+      height: 64px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .user-location-wrapper {
+      width: 64px;
+      height: 64px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: 50% 50%;
+      transition: transform 0.12s linear;
+    }
+
+    /* Haz de visión hacia adelante estilo linterna de Google Maps */
+    .user-vision-cone {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: conic-gradient(
+        from -35deg at 50% 50%,
+        rgba(14, 165, 233, 0) 0deg,
+        rgba(14, 165, 233, 0.42) 20deg,
+        rgba(56, 189, 248, 0.65) 35deg,
+        rgba(14, 165, 233, 0.42) 50deg,
+        rgba(14, 165, 233, 0) 70deg,
+        rgba(14, 165, 233, 0) 360deg
+      );
+      filter: drop-shadow(0 0 6px rgba(14, 165, 233, 0.55));
+      pointer-events: none;
+    }
+
+    /* Punto central azul de ubicación con halo blanco y flecha de rumbo */
+    .user-puck-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #38bdf8 0%, #0284c7 100%);
+      border: 2.5px solid #ffffff;
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.35), 0 3px 8px rgba(0, 0, 0, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      position: relative;
+    }
+
+    .user-puck-arrow {
+      color: #ffffff;
+      font-size: 0.72rem;
+      line-height: 1;
+      font-weight: 900;
+      transform: translateY(-0.5px);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    }
+
+/* =====================================================================
+     * MODO NAVEGACIÓN EN VIVO (ESTILO GOOGLE MAPS / WAZE)
+     * ===================================================================== */
+    .nav-hud-banner {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      max-width: 500px;
+      margin: 0 auto;
+      background: linear-gradient(145deg, #064e3b 0%, #022c22 100%);
+      border: 2px solid rgba(52, 211, 153, 0.65);
+      border-radius: 18px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75);
+      z-index: 1500;
+      color: #fff;
+      overflow: hidden;
+      display: none;
+      flex-direction: column;
+      animation: slideDown 0.25s ease-out;
+    }
+
+    .nav-hud-banner.visible {
+      display: flex;
+    }
+
+    /* Barra de progreso de proximidad a la maniobra */
+    .nav-progress-track {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.15);
+      overflow: hidden;
+    }
+
+    .nav-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #34d399, #38bdf8);
+      transition: width 0.35s ease-out;
+      box-shadow: 0 0 8px #34d399;
+    }
+
+    .nav-hud-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .nav-turn-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 68px;
+      height: 68px;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 16px;
+      padding: 4px;
+      flex-shrink: 0;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.25);
+    }
+
+    .nav-turn-icon {
+      font-size: 2.1rem;
+      line-height: 1.05;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    }
+
+    .nav-turn-dist {
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: #6ee7b7;
+      margin-top: 1px;
+      letter-spacing: -0.2px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+    }
+
+    .nav-instruction-col {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .nav-instruction-action {
+      font-size: 1.12rem;
+      font-weight: 900;
+      line-height: 1.2;
+      color: #ffffff;
+      letter-spacing: -0.2px;
+    }
+
+    .nav-instruction-street {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #a7f3d0;
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .nav-surface-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      align-self: flex-start;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      margin-top: 2px;
+    }
+
+    .nav-hud-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .nav-hud-btn {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      font-size: 1.05rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, transform 0.12s, border-color 0.2s;
+    }
+
+    .nav-hud-btn:hover {
+      background: rgba(56, 189, 248, 0.35);
+      border-color: #38bdf8;
+    }
+
+    .nav-hud-btn:active {
+      transform: scale(0.92);
+    }
+
+    .nav-hud-btn.active {
+      background: rgba(14, 165, 233, 0.45);
+      border-color: #38bdf8;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
+    }
+
+    .nav-hud-sub {
+      background: rgba(2, 44, 34, 0.92);
+      padding: 7px 14px;
+      font-size: 0.75rem;
+      color: #d1fae5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .nav-next-step-wrap {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      padding-right: 8px;
+    }
+
+    /* Botón de Iniciar Navegación en la tarjeta resumen */
+    .btn-start-nav {
+      width: 100%;
+      position: relative;
+      background: linear-gradient(135deg, #059669 0%, #10b981 50%, #06b6d4 100%);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 13px 18px;
+      font-size: 0.98rem;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+      letter-spacing: 0.2px;
+      transition: transform 0.15s, box-shadow 0.2s, filter 0.2s;
+      overflow: hidden;
+    }
+
+    .btn-start-nav:hover {
+      box-shadow: 0 8px 26px rgba(16, 185, 129, 0.65);
+      filter: brightness(1.05);
+    }
+
+    .btn-start-nav:active {
+      transform: scale(0.98);
+    }
+
+    .btn-start-nav-icon {
+      font-size: 1.45rem;
+      animation: pulseNavIcon 2.2s infinite ease-in-out;
+      flex-shrink: 0;
+    }
+
+    .btn-start-nav-text {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      line-height: 1.2;
+    }
+
+    .btn-start-nav-main {
+      font-size: 1.02rem;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-start-nav-sub {
+      font-size: 0.72rem;
+      font-weight: 600;
+      opacity: 0.9;
+      color: #ecfdf5;
+    }
+
+    @keyframes pulseNavIcon {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.18); }
+    }
+
+    /* Barra inferior durante la navegación activa */
+    .nav-active-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .nav-active-bar.visible {
+      display: flex;
+    }
+
+    .nav-speed-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: #0f172a;
+      border: 3px solid #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+      flex-shrink: 0;
+    }
+
+    .nav-speed-val {
+      font-size: 1.1rem;
+      font-weight: 900;
+      line-height: 1;
+      color: #fff;
+    }
+
+    .nav-speed-unit {
+      font-size: 0.58rem;
+      color: #94a3b8;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .nav-live-metrics {
+      display: flex;
+      flex: 1;
+      justify-content: space-around;
+      text-align: center;
+      gap: 6px;
+    }
+
+    .nav-live-stat {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav-live-val {
+      font-size: 1.02rem;
+      font-weight: 800;
+      color: #4ade80;
+    }
+
+    .nav-live-lbl {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .btn-nav-steps {
+      background: rgba(30, 41, 59, 0.9);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      border-radius: 12px;
+      padding: 9px 12px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.15s, border-color 0.15s, transform 0.12s;
+      flex-shrink: 0;
+    }
+
+    .btn-nav-steps:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: #38bdf8;
+    }
+
+    .btn-nav-steps:active {
+      transform: scale(0.95);
+    }
+
+    .btn-stop-nav {
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 13px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+      flex-shrink: 0;
+      transition: transform 0.12s, filter 0.15s;
+    }
+
+    .btn-stop-nav:active {
+      transform: scale(0.95);
+    }
+
+    /* Drawer de lista de pasos / itinerario completo */
+    .maneuvers-drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      visibility: hidden;
+      opacity: 0;
+      transition: visibility 0.25s, opacity 0.25s ease;
+    }
+
+    .maneuvers-drawer.open {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .maneuvers-drawer-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+    }
+
+    .maneuvers-drawer-sheet {
+      position: relative;
+      background: var(--bg-card);
+      border-top-left-radius: 22px;
+      border-top-right-radius: 22px;
+      border-top: 2px solid rgba(56, 189, 248, 0.45);
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.65);
+      max-height: 72vh;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1;
+    }
+
+    .maneuvers-drawer.open .maneuvers-drawer-sheet {
+      transform: translateY(0);
+    }
+
+    .maneuvers-drawer-handle {
+      width: 44px;
+      height: 5px;
+      background: var(--text-muted);
+      opacity: 0.4;
+      border-radius: 3px;
+      margin: 10px auto 4px auto;
+    }
+
+    .maneuvers-drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 18px 12px 18px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .maneuvers-drawer-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .maneuvers-count-pill {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .btn-close-drawer {
+      background: var(--bg-input);
+      color: var(--text-muted);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 1.05rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .btn-close-drawer:hover {
+      color: var(--text-primary);
+    }
+
+    .maneuvers-list {
+      overflow-y: auto;
+      padding: 10px 14px 24px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .maneuver-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 11px 12px;
+      border-radius: 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+
+    .maneuver-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    .maneuver-item:active {
+      transform: scale(0.99);
+    }
+
+    .maneuver-item.current {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: #10b981;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .maneuver-item-icon-box {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .maneuver-item.current .maneuver-item-icon-box {
+      background: #10b981;
+      color: #fff;
+    }
+
+    .maneuver-item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .maneuver-item-action {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .maneuver-item-street {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #38bdf8;
+    }
+
+    .maneuver-item-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .maneuver-item-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    /* Botón flotante "Recentrar" cuando el usuario mueve el mapa en navegación */
+    .recenter-nav-btn {
+      position: fixed;
+      left: 12px;
+      bottom: 185px;
+      z-index: 1400;
+      background: rgba(15, 23, 42, 0.95);
+      color: #38bdf8;
+      border: 2px solid #38bdf8;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .recenter-nav-btn.visible {
+      display: inline-flex;
+    }
+
+    /* Marcador GPS en tiempo real (Puck estilo navegador) */
+    .nav-rider-puck {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #0ea5e9 0%, #0284c7 100%);
+      border: 3px solid #ffffff;
+      box-shadow: 0 0 0 6px rgba(14, 165, 233, 0.32), 0 4px 12px rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      color: #fff;
+      transition: transform 0.25s linear;
+    }

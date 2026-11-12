@@ -1,0 +1,25 @@
+/* ==========================================================================
+   Biciadolid - Variables y Design Tokens
+   ========================================================================== */
+
+:root {
+      --primary: #0ea5e9;
+      --primary-dark: #0284c7;
+      --green-safe: #2ecc71;
+      --red-danger: #e74c3c;
+      --orange-other: #f39c12;
+      --cyan-cycleway: #00d2ff;
+      --gisava-excl2: #00a884;
+      --gisava-excl1: #ef4444;
+      --gisava-comp2: #ffaa00;
+      --gisava-comp1: #005ce6;
+      --gisava-ciclo: #c500ff;
+      --gisava-alfoz: #267300;
+      --bg-card: rgba(15, 23, 42, 0.94);
+      --bg-input: rgba(30, 41, 59, 0.92);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: rgba(148, 163, 184, 0.22);
+      --radius: 16px;
+      --shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.5);
+    }

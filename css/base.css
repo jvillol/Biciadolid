@@ -1,0 +1,27 @@
+/* ==========================================================================
+   Biciadolid - Estilos Base, Resets y Contenedor del Mapa
+   ========================================================================== */
+
+* {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0f172a;
+      color: var(--text-main);
+    }
+
+    /* Mapa 100% pantalla */
+    #map {
+      width: 100%;
+      height: 100vh;
+      z-index: 1;
+      background: #e2e8f0;
+    }
